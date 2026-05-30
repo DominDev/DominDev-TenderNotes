@@ -26,6 +26,20 @@ In GitHub, enable Pages from GitHub Actions:
 Settings -> Pages -> Build and deployment -> Source: GitHub Actions
 ```
 
+Before the Pages workflow can produce a connected app, add these repository settings in GitHub:
+
+```text
+Settings -> Secrets and variables -> Actions -> Variables
+SUPABASE_URL = your Supabase Project URL
+```
+
+```text
+Settings -> Secrets and variables -> Actions -> Secrets
+SUPABASE_ANON_KEY = your Supabase anon public key
+```
+
+The workflow writes `frontend/js/config.js` during deployment. The committed local file can stay empty.
+
 ## Local Preview
 
 ```powershell
@@ -37,4 +51,3 @@ Then open:
 ```text
 http://localhost:8080
 ```
-

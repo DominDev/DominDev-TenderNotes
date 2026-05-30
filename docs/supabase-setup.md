@@ -49,6 +49,26 @@ export const SUPABASE_CONFIG = {
 
 The anon key is intended for browser use. Access control is handled by Row Level Security policies.
 
+For GitHub Pages, the preferred setup is to place the values in GitHub Actions settings instead of editing the committed file:
+
+```text
+Repository -> Settings -> Secrets and variables -> Actions
+```
+
+Add a variable:
+
+```text
+SUPABASE_URL
+```
+
+Add a secret:
+
+```text
+SUPABASE_ANON_KEY
+```
+
+The Pages workflow injects these values into `frontend/js/config.js` during deployment.
+
 ## Authentication Settings
 
 For the easiest first test, use Supabase Auth with email and password. If email confirmation is enabled, new users must confirm their email before signing in.
@@ -60,4 +80,3 @@ Authentication -> URL Configuration -> Site URL
 ```
 
 And add it to redirect URLs if email confirmation is used.
-
