@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7efe6">
+    <title>TenderNotes</title>
+    <link rel="stylesheet" href="./css/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar" id="topbar" hidden>
+        <div>
+          <p class="topbar__eyebrow">TenderNotes</p>
+          <h1 class="topbar__title" id="viewTitle">Dziennik</h1>
+        </div>
+        <button class="icon-button" id="logoutButton" type="button" aria-label="Wyloguj" title="Wyloguj">
+          <span aria-hidden="true">⎋</span>
+        </button>
+      </header>
+
+      <main class="main" id="app">
+        <section class="loading">
+          <p class="loading__brand">TenderNotes</p>
+          <p class="loading__text">Ładowanie aplikacji...</p>
+        </section>
+      </main>
+
+      <nav class="tabbar" id="tabbar" aria-label="Główna nawigacja" hidden>
+        <button class="tabbar__button" type="button" data-route="dashboard">
+          <span class="tabbar__icon" aria-hidden="true">⌂</span>
+          <span>Start</span>
+        </button>
+        <button class="tabbar__button" type="button" data-route="entry">
+          <span class="tabbar__icon" aria-hidden="true">＋</span>
+          <span>Wpis</span>
+        </button>
+        <button class="tabbar__button" type="button" data-route="history">
+          <span class="tabbar__icon" aria-hidden="true">≡</span>
+          <span>Dni</span>
+        </button>
+        <button class="tabbar__button" type="button" data-route="report">
+          <span class="tabbar__icon" aria-hidden="true">⌁</span>
+          <span>Raport</span>
+        </button>
+      </nav>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

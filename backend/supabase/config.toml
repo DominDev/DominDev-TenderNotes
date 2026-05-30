@@ -1,0 +1,8 @@
+project_id = "TenderNotes"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+

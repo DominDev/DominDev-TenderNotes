@@ -1,0 +1,206 @@
+import { OBSERVATION_FIELDS, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
+import { completionCount, dayAverage, escapeHtml, round } from "./utils.js";
+
+export function buildReport(observations) {
+  const completedDays = observations.filter((observation) => completionCount(observation) > 0);
+  const allScores = [];
+  const zeroCountsByField = new Map();
+
+  OBSERVATION_FIELDS.forEach((field) => zeroCountsByField.set(field.key, 0));
+
+  observations.forEach((observation) => {
+    OBSERVATION_FIELDS.forEach((field) => {
+      const score = observation[field.key];
+      if (Number.isInteger(score)) {
+        allScores.push(score);
+      }
+      if (score === 0) {
+        zeroCountsByField.set(field.key, zeroCountsByField.get(field.key) + 1);
+      }
+    });
+  });
+
+  const average = allScores.length ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length : null;
+  const scoreCounts = [0, 1, 2].map((score) => allScores.filter((value) => value === score).length);
+  const weakest = OBSERVATION_FIELDS
+    .map((field) => ({
+      label: field.label,
+      zeros: zeroCountsByField.get(field.key),
+      average: fieldAverage(observations, field.key),
+    }))
+    .sort((a, b) => b.zeros - a.zeros || (a.average ?? 99) - (b.average ?? 99))
+    .slice(0, 3);
+
+  return {
+    completedDays: completedDays.length,
+    totalDays: TOTAL_DAYS,
+    average,
+    scoreCounts,
+    weakest,
+    insights: buildInsights(completedDays, average, scoreCounts, weakest),
+  };
+}
+
+function fieldAverage(observations, key) {
+  const values = observations.map((item) => item[key]).filter((value) => Number.isInteger(value));
+  if (!values.length) {
+    return null;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function buildInsights(completedDays, average, scoreCounts, weakest) {
+  const insights = [];
+  const zeroCount = scoreCounts[0] ?? 0;
+
+  if (!completedDays.length) {
+    return ["Wypełnij pierwsze dni, aby zobaczyć wzorce i trendy."];
+  }
+
+  if (average !== null && average >= 1.5) {
+    insights.push("Większość ocen wskazuje na funkcjonowanie typowe lub możliwe do ukojenia.");
+  }
+
+  if (zeroCount >= 6) {
+    insights.push("Oceny 0 pojawiają się kilka razy. Warto sprawdzić, czy dotyczą tych samych sytuacji i dni.");
+  }
+
+  const repeatedWeakness = weakest.find((item) => item.zeros >= 3);
+  if (repeatedWeakness) {
+    insights.push(`Najczęściej powtarzająca się trudność: ${repeatedWeakness.label}.`);
+  }
+
+  if (completedDays.length < 14) {
+    insights.push(`Raport jest częściowy: uzupełniono ${completedDays.length} z 14 dni.`);
+  }
+
+  if (!insights.length) {
+    insights.push("Dane są mieszane. Najwięcej powiedzą kolejne dni i konkretne notatki.");
+  }
+
+  return insights;
+}
+
+export function renderReportHtml(observations) {
+  const report = buildReport(observations);
+
+  return `
+    <section class="dashboard">
+      <div class="hero">
+        <p class="section-label">Raport</p>
+        <h2 class="hero__title">${round(report.average)}</h2>
+        <p class="hero__text">Średnia ze wszystkich ocen. Skala 0 oznacza wyraźną trudność, a 2 funkcjonowanie dobre lub typowe.</p>
+      </div>
+
+      <div class="metrics">
+        <article class="metric">
+          <p class="metric__label">Dni</p>
+          <p class="metric__value">${report.completedDays}/${report.totalDays}</p>
+        </article>
+        <article class="metric">
+          <p class="metric__label">Oceny 0</p>
+          <p class="metric__value">${report.scoreCounts[0]}</p>
+        </article>
+        <article class="metric">
+          <p class="metric__label">Oceny 1</p>
+          <p class="metric__value">${report.scoreCounts[1]}</p>
+        </article>
+        <article class="metric">
+          <p class="metric__label">Oceny 2</p>
+          <p class="metric__value">${report.scoreCounts[2]}</p>
+        </article>
+      </div>
+
+      <section class="chart-grid">
+        <article class="chart-panel chart-panel--wide">
+          <h3 class="chart-panel__title">Trend średniej dziennej</h3>
+          <canvas class="chart" id="trendChart"></canvas>
+        </article>
+        <article class="chart-panel">
+          <h3 class="chart-panel__title">Średnia per obszar</h3>
+          <canvas class="chart" id="areaChart"></canvas>
+        </article>
+        <article class="chart-panel">
+          <h3 class="chart-panel__title">Rozkład ocen</h3>
+          <canvas class="chart" id="distributionChart"></canvas>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h3 class="panel__title">Wnioski pomocnicze</h3>
+        <ul class="insights">
+          ${report.insights.map((item) => `<li class="insights__item">${escapeHtml(item)}</li>`).join("")}
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h3 class="panel__title">Najczęściej zaznaczane trudności</h3>
+        <ul class="insights">
+          ${report.weakest
+            .map(
+              (item) => `
+                <li class="insights__item">
+                  <strong>${escapeHtml(item.label)}</strong><br>
+                  Oceny 0: ${item.zeros}, średnia: ${round(item.average)}
+                </li>
+              `,
+            )
+            .join("")}
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h3 class="panel__title">Pytania podsumowujące</h3>
+        <p class="panel__hint">Wypełnij je po kilku lub czternastu dniach, kiedy widać więcej niż pojedyncze zdarzenia.</p>
+        <div class="action-row">
+          <button class="button button--secondary" type="button" data-route-action="summary">Otwórz pytania</button>
+          <button class="button button--ghost" type="button" data-print>Drukuj raport</button>
+        </div>
+      </section>
+    </section>
+  `;
+}
+
+export function renderSummaryHtml(answers) {
+  const answerMap = new Map(answers.map((answer) => [answer.question_key, answer]));
+
+  return `
+    <section class="dashboard">
+      <div class="hero">
+        <p class="section-label">Podsumowanie</p>
+        <h2 class="hero__title">Po 14 dniach</h2>
+        <p class="hero__text">To miejsce na spokojne pytania końcowe z dokumentu, bez opierania się na pojedynczym zdjęciu czy jednym dniu.</p>
+      </div>
+
+      <form class="question-list" id="summaryForm">
+        ${SUMMARY_QUESTIONS.map((question) => {
+          const answer = answerMap.get(question.key) ?? {};
+          return `
+            <article class="question" data-question-key="${question.key}">
+              <h3 class="question__title">${escapeHtml(question.text)}</h3>
+              <label class="field">
+                <span class="field__label">Odpowiedź</span>
+                <select class="field__select" name="${question.key}_answer">
+                  <option value="">Wybierz</option>
+                  <option value="tak" ${answer.answer === "tak" ? "selected" : ""}>Tak</option>
+                  <option value="nie" ${answer.answer === "nie" ? "selected" : ""}>Nie</option>
+                  <option value="nie_wiem" ${answer.answer === "nie_wiem" ? "selected" : ""}>Nie wiem</option>
+                </select>
+              </label>
+              <label class="field">
+                <span class="field__label">Co za tym przemawia?</span>
+                <textarea class="field__textarea" name="${question.key}_evidence">${escapeHtml(answer.evidence)}</textarea>
+              </label>
+              <label class="field">
+                <span class="field__label">Co dalej?</span>
+                <textarea class="field__textarea" name="${question.key}_next_step">${escapeHtml(answer.next_step)}</textarea>
+              </label>
+            </article>
+          `;
+        }).join("")}
+        <button class="button" type="submit">Zapisz podsumowanie</button>
+      </form>
+    </section>
+  `;
+}
+
