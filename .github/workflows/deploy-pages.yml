@@ -37,12 +37,14 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          cat > frontend/js/config.js <<EOF
-          export const SUPABASE_CONFIG = {
-            url: "${SUPABASE_URL}",
-            anonKey: "${SUPABASE_ANON_KEY}",
-          };
-          EOF
+          if [[ -n "${SUPABASE_URL}" && -n "${SUPABASE_ANON_KEY}" ]]; then
+            cat > frontend/js/config.js <<EOF
+            export const SUPABASE_CONFIG = {
+              url: "${SUPABASE_URL}",
+              anonKey: "${SUPABASE_ANON_KEY}",
+            };
+            EOF
+          fi
 
       - name: Upload static frontend
         uses: actions/upload-pages-artifact@v3
