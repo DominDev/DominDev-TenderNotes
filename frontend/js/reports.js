@@ -124,6 +124,26 @@ function renderReportNotesHtml(notesByDay) {
   `;
 }
 
+function renderWeakestHtml(weakest, className = "") {
+  return `
+    <section class="panel report-weaknesses ${className}">
+      <h3 class="panel__title">Najczęściej zaznaczane trudności</h3>
+      <ul class="insights">
+        ${weakest
+          .map(
+            (item) => `
+              <li class="insights__item">
+                <strong>${escapeHtml(item.label)}</strong><br>
+                Dni z trudnością: ${item.zeros}, średnia: ${round(item.average)}
+              </li>
+            `,
+          )
+          .join("")}
+      </ul>
+    </section>
+  `;
+}
+
 export function renderReportHtml(observations) {
   const report = buildReport(observations);
 
@@ -182,6 +202,7 @@ export function renderReportHtml(observations) {
           <h3 class="chart-panel__title">Rozkład nastrojów</h3>
           <canvas class="chart" id="distributionChart"></canvas>
         </article>
+        ${renderWeakestHtml(report.weakest, "report-weaknesses--print")}
       </section>
 
       <section class="panel">
@@ -191,21 +212,7 @@ export function renderReportHtml(observations) {
         </ul>
       </section>
 
-      <section class="panel">
-        <h3 class="panel__title">Najczęściej zaznaczane trudności</h3>
-        <ul class="insights">
-          ${report.weakest
-            .map(
-              (item) => `
-                <li class="insights__item">
-                  <strong>${escapeHtml(item.label)}</strong><br>
-                  Dni z trudnością: ${item.zeros}, średnia: ${round(item.average)}
-                </li>
-              `,
-            )
-            .join("")}
-        </ul>
-      </section>
+      ${renderWeakestHtml(report.weakest)}
 
       ${renderReportNotesHtml(report.notesByDay)}
 

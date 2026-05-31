@@ -694,7 +694,7 @@ button {
 .chart-legend__item {
   min-width: 0;
   display: grid;
-  grid-template-columns: 10px 1fr auto;
+  grid-template-columns: 12px 1fr auto;
   align-items: center;
   gap: 7px;
   padding: 7px 8px;
@@ -704,9 +704,12 @@ button {
 }
 
 .chart-legend__swatch {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 999px;
+  border: 1px solid rgba(36, 32, 29, 0.16);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 
 .chart-legend__label {
@@ -737,6 +740,10 @@ button {
   border: 1px solid var(--color-line);
   border-radius: var(--radius);
   line-height: 1.42;
+}
+
+.report-weaknesses--print {
+  display: none;
 }
 
 .report-notes__list {
@@ -937,7 +944,16 @@ button {
   }
 
   .chart-panel--distribution {
-    grid-column: 1 / -1;
+    grid-column: 1 / 2;
+  }
+
+  .report-weaknesses {
+    display: none;
+  }
+
+  .report-weaknesses--print {
+    grid-column: 2 / 3;
+    display: block;
   }
 
   .chart-panel__body--area {
