@@ -26,6 +26,18 @@ http://localhost:8080
 
 The app needs `frontend/js/config.js` filled with your Supabase project URL and anon key before authentication and database calls can work.
 
+## GitHub Pages
+
+The repository works with GitHub Pages configured as:
+
+```text
+Source: Deploy from a branch
+Branch: main
+Folder: / (root)
+```
+
+The root `index.html` redirects to the static app in `frontend/`.
+
 ## Supabase GitHub Integration
 
 In Supabase, use:

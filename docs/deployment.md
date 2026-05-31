@@ -14,19 +14,18 @@ after changes are merged into `main`.
 
 ## Frontend
 
-GitHub Pages can publish the `frontend/` folder with the included workflow:
+The simplest GitHub Pages setup for this repository is:
 
 ```text
-.github/workflows/deploy-pages.yml
+Settings -> Pages -> Build and deployment
+Source: Deploy from a branch
+Branch: main
+Folder: / (root)
 ```
 
-In GitHub, enable Pages from GitHub Actions:
+The root `index.html` redirects to the app in `frontend/`.
 
-```text
-Settings -> Pages -> Build and deployment -> Source: GitHub Actions
-```
-
-Before the Pages workflow can produce a connected app, add these repository settings in GitHub:
+The repository also includes a GitHub Actions workflow for a future Pages-from-Actions setup. If that mode is used later, add these repository settings:
 
 ```text
 Settings -> Secrets and variables -> Actions -> Variables
