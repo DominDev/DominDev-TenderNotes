@@ -184,10 +184,6 @@ button {
   gap: 16px;
 }
 
-.auth-form .auth-switch {
-  margin-bottom: 14px;
-}
-
 .auth-form .button {
   margin-top: 4px;
 }
@@ -282,6 +278,7 @@ button {
 .auth-switch {
   display: flex;
   gap: 8px;
+  margin-bottom: 18px;
   padding: 4px;
   background: var(--color-surface-strong);
   border: 1px solid var(--color-line);
