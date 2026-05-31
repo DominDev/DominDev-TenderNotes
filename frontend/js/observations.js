@@ -81,6 +81,9 @@ export function renderObservationFormHtml(dayNumber, observation) {
                     `,
                   ).join("")}
                 </div>
+                <button class="score-row__clear" type="button" data-clear-score data-field="${field.key}">
+                  Wyczyść odpowiedź
+                </button>
                 <input type="hidden" name="${field.key}" value="${Number.isInteger(value) ? value : ""}">
               </fieldset>
             `;
@@ -147,6 +150,18 @@ export function wireScoreButtons(root) {
         const isSelected = item === button;
         item.classList.toggle("is-selected", isSelected);
         item.setAttribute("aria-pressed", String(isSelected));
+      });
+    });
+  });
+
+  root.querySelectorAll("[data-clear-score]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const field = button.dataset.field;
+      const row = button.closest(".score-row");
+      row.querySelector(`input[name="${field}"]`).value = "";
+      row.querySelectorAll("[data-score-button]").forEach((item) => {
+        item.classList.remove("is-selected");
+        item.setAttribute("aria-pressed", "false");
       });
     });
   });
