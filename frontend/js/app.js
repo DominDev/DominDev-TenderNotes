@@ -23,7 +23,7 @@ const titles = {
   entry: "Wpis dzienny",
   history: "Historia",
   report: "Raport",
-  summary: "Podsumowanie",
+  summary: "Pytania otwarte",
 };
 
 async function boot() {

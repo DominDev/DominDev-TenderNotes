@@ -168,8 +168,8 @@ export function renderReportHtml(observations) {
       </section>
 
       <section class="panel">
-        <h3 class="panel__title">Pytania podsumowujące</h3>
-        <p class="panel__hint">Wypełnij je po kilku lub czternastu dniach, kiedy widać więcej niż pojedyncze zdarzenia.</p>
+        <h3 class="panel__title">Pytania otwarte</h3>
+        <p class="panel__hint">Wypełnij je po kilku lub czternastu dniach, kiedy łatwiej zobaczyć rytm i powtarzające się sytuacje.</p>
         <div class="action-row">
           <button class="button button--secondary" type="button" data-route-action="summary">Otwórz pytania</button>
           <button class="button button--ghost" type="button" data-print>Drukuj raport</button>
@@ -185,9 +185,9 @@ export function renderSummaryHtml(answers) {
   return `
     <section class="dashboard">
       <div class="hero">
-        <p class="section-label">Podsumowanie</p>
-        <h2 class="hero__title">Po 14 dniach</h2>
-        <p class="hero__text">To miejsce na spokojne pytania końcowe z dokumentu, bez opierania się na pojedynczym zdjęciu czy jednym dniu.</p>
+        <p class="section-label">Pytania otwarte</p>
+        <h2 class="hero__title">Dodatkowy kontekst</h2>
+        <p class="hero__text">Zapisz odpowiedzi wtedy, kiedy widać już kilka dni obserwacji i łatwiej nazwać powtarzające się sytuacje.</p>
       </div>
 
       <form class="question-list" id="summaryForm">
@@ -196,7 +196,7 @@ export function renderSummaryHtml(answers) {
           return `
             <article class="question" data-question-key="${question.key}">
               <h3 class="question__title">${escapeHtml(question.text)}</h3>
-              <label class="field">
+              <label class="field question__field">
                 <span class="field__label">Odpowiedź</span>
                 <select class="field__select" name="${question.key}_answer">
                   <option value="">Wybierz</option>
@@ -205,11 +205,11 @@ export function renderSummaryHtml(answers) {
                   <option value="nie_wiem" ${answer.answer === "nie_wiem" ? "selected" : ""}>Nie wiem</option>
                 </select>
               </label>
-              <label class="field">
+              <label class="field question__field">
                 <span class="field__label">Co za tym przemawia?</span>
                 <textarea class="field__textarea" name="${question.key}_evidence">${escapeHtml(answer.evidence)}</textarea>
               </label>
-              <label class="field">
+              <label class="field question__field">
                 <span class="field__label">Co dalej?</span>
                 <textarea class="field__textarea" name="${question.key}_next_step">${escapeHtml(answer.next_step)}</textarea>
               </label>

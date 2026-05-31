@@ -11,6 +11,9 @@
   --color-good: #3c7a4a;
   --shadow-soft: 0 16px 40px rgba(42, 32, 24, 0.08);
   --radius: 8px;
+  --space-card: 14px;
+  --space-card-lg: 16px;
+  --space-field: 12px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -154,7 +157,7 @@ button {
 }
 
 .panel {
-  padding: 16px;
+  padding: var(--space-card-lg);
 }
 
 .panel__title,
@@ -694,16 +697,23 @@ button {
 
 .question-list {
   display: grid;
-  gap: 12px;
+  gap: var(--space-card);
 }
 
 .question {
-  padding: 14px;
+  display: grid;
+  gap: var(--space-field);
+  padding: var(--space-card-lg);
 }
 
 .question__title {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.question__field {
+  gap: 8px;
 }
 
 .tabbar {
