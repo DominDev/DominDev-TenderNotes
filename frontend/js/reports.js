@@ -1,6 +1,6 @@
 import { OBSERVATION_FIELDS, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
 import { AREA_COLORS } from "./charts.js";
-import { completionCount, dayAverage, escapeHtml, round } from "./utils.js";
+import { completionCount, escapeHtml, formatDate, parseNotes, round } from "./utils.js";
 
 export function buildReport(observations) {
   const completedDays = observations.filter((observation) => completionCount(observation) > 0);
@@ -43,6 +43,7 @@ export function buildReport(observations) {
       average: fieldAverage(observations, field.key),
     })),
     insights: buildInsights(completedDays, average, scoreCounts, weakest),
+    notesByDay: buildNotesByDay(observations),
   };
 }
 
@@ -84,6 +85,43 @@ function buildInsights(completedDays, average, scoreCounts, weakest) {
   }
 
   return insights;
+}
+
+function buildNotesByDay(observations) {
+  return observations
+    .map((observation) => ({
+      dayNumber: observation.day_number,
+      date: observation.observation_date,
+      notes: parseNotes(observation.notes),
+    }))
+    .filter((item) => item.notes.length)
+    .sort((a, b) => a.dayNumber - b.dayNumber);
+}
+
+function renderReportNotesHtml(notesByDay) {
+  if (!notesByDay.length) {
+    return "";
+  }
+
+  return `
+    <section class="panel report-notes">
+      <h3 class="panel__title">Notatki</h3>
+      <div class="report-notes__list">
+        ${notesByDay
+          .map(
+            (day) => `
+              <article class="report-notes__day">
+                <h4 class="report-notes__title">Dzień ${day.dayNumber}${day.date ? ` · ${formatDate(day.date)}` : ""}</h4>
+                <ul class="report-notes__items">
+                  ${day.notes.map((note) => `<li class="report-notes__item">${escapeHtml(note.text)}</li>`).join("")}
+                </ul>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+    </section>
+  `;
 }
 
 export function renderReportHtml(observations) {
@@ -166,6 +204,8 @@ export function renderReportHtml(observations) {
             .join("")}
         </ul>
       </section>
+
+      ${renderReportNotesHtml(report.notesByDay)}
 
       <section class="panel">
         <h3 class="panel__title">Pytania otwarte</h3>

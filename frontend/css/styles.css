@@ -734,6 +734,37 @@ button {
   line-height: 1.42;
 }
 
+.report-notes__list {
+  display: grid;
+  gap: 10px;
+}
+
+.report-notes__day {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: #fffdf9;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+}
+
+.report-notes__title {
+  margin: 0;
+  color: var(--color-accent-strong);
+  font-size: 0.9rem;
+}
+
+.report-notes__items {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.report-notes__item {
+  line-height: 1.45;
+}
+
 .question-list {
   display: grid;
   gap: var(--space-card);
