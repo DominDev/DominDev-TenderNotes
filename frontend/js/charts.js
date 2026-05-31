@@ -29,7 +29,7 @@ function drawAxes(ctx, width, height, padding) {
 
 export function drawTrend(canvas, observations) {
   const { ctx, width, height } = setupCanvas(canvas);
-  const padding = { top: 18, right: 14, bottom: 28, left: 32 };
+  const padding = { top: 18, right: 14, bottom: 28, left: 34 };
   clear(ctx, width, height);
   drawAxes(ctx, width, height, padding);
 
@@ -45,9 +45,19 @@ export function drawTrend(canvas, observations) {
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
 
+  const middleY = padding.top + plotHeight / 2;
+  ctx.strokeStyle = "#d9c4ae";
+  ctx.setLineDash([4, 5]);
+  ctx.beginPath();
+  ctx.moveTo(padding.left, middleY);
+  ctx.lineTo(width - padding.right, middleY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
   ctx.fillStyle = "#756a61";
   ctx.font = "12px system-ui";
   ctx.fillText("✓", 10, padding.top + 4);
+  ctx.fillText("◐", 8, middleY + 4);
   ctx.fillText("☁", 8, height - padding.bottom + 4);
 
   ctx.strokeStyle = "#2f746f";
@@ -95,7 +105,7 @@ export function drawTrend(canvas, observations) {
 
 export function drawAreaAverages(canvas, observations) {
   const { ctx, width, height } = setupCanvas(canvas);
-  const padding = { top: 18, right: 10, bottom: 58, left: 28 };
+  const padding = { top: 18, right: 10, bottom: 88, left: 28 };
   clear(ctx, width, height);
   drawAxes(ctx, width, height, padding);
 
@@ -121,9 +131,9 @@ export function drawAreaAverages(canvas, observations) {
 
     ctx.fillStyle = "#756a61";
     ctx.save();
-    ctx.translate(x + barWidth / 2, height - 48);
-    ctx.rotate(-Math.PI / 4);
-    ctx.font = "11px system-ui";
+    ctx.translate(x + barWidth / 2, height - 70);
+    ctx.rotate(-Math.PI / 2);
+    ctx.font = "10px system-ui";
     ctx.fillText(item.field.shortLabel, 0, 0);
     ctx.restore();
 

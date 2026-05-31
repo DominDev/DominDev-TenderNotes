@@ -89,7 +89,7 @@ export function renderReportHtml(observations) {
       <div class="hero">
         <p class="section-label">Raport</p>
         <h2 class="hero__title">${round(report.average)}</h2>
-        <p class="hero__text">Im bliżej 2, tym więcej spokojnych obserwacji. Najważniejszy jest kierunek i powtarzalność, nie jeden wynik.</p>
+        <p class="hero__text">Im bliżej 2, tym więcej spokojnych obserwacji. Patrz przede wszystkim na kierunek i powtarzalność.</p>
       </div>
 
       <div class="metrics">
@@ -127,7 +127,7 @@ export function renderReportHtml(observations) {
       </section>
 
       <section class="panel">
-        <h3 class="panel__title">Wnioski pomocnicze</h3>
+        <h3 class="panel__title">Wnioski</h3>
         <ul class="insights">
           ${report.insights.map((item) => `<li class="insights__item">${escapeHtml(item)}</li>`).join("")}
         </ul>

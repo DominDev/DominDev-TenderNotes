@@ -59,8 +59,10 @@ function renderConfigMissing() {
   app.innerHTML = `
     <section class="auth">
       <div>
-        <p class="section-label">TenderNotes</p>
-        <h1 class="auth__brand">TenderNotes</h1>
+        <div class="auth-brand">
+          <img class="auth-brand__mark" src="./assets/logo.svg" alt="" width="64" height="64">
+          <h1 class="auth-brand__name">TenderNotes</h1>
+        </div>
         <p class="auth__lead">Aplikacja jest gotowa strukturalnie, ale wymaga podpięcia projektu Supabase.</p>
       </div>
       <div class="panel">
@@ -77,9 +79,11 @@ function renderAuth(message = "") {
   app.innerHTML = `
     <section class="auth">
       <div>
-        <p class="section-label">TenderNotes</p>
-        <h1 class="auth__brand">TenderNotes</h1>
-        <p class="auth__lead">Kilka minut dziennie, żeby zobaczyć spokojny wzorzec zamiast oceniać pojedynczy moment.</p>
+        <div class="auth-brand">
+          <img class="auth-brand__mark" src="./assets/logo.svg" alt="" width="64" height="64">
+          <h1 class="auth-brand__name">TenderNotes</h1>
+        </div>
+        <p class="auth__lead">Kilka minut dziennie, żeby spokojnie zobaczyć rytm ostatnich dni.</p>
       </div>
 
       <div class="panel">
@@ -196,7 +200,7 @@ function renderDashboard() {
       <div class="hero">
         <p class="section-label">TenderNotes</p>
         <h2 class="hero__title">Dzień po dniu</h2>
-        <p class="hero__text">Zapisuj krótkie obserwacje po dniu. TenderNotes pomaga zauważyć, co się powtarza, a co było tylko chwilą.</p>
+        <p class="hero__text">Zapisuj krótkie obserwacje po dniu. TenderNotes pomaga zobaczyć, co wraca najczęściej i gdzie dzień układa się spokojnie.</p>
         <div class="hero__actions">
           <button class="button" type="button" data-route-action="entry">Wypełnij dzień</button>
           <button class="button button--secondary" type="button" data-route-action="report">Zobacz raport</button>
@@ -253,8 +257,14 @@ function renderEntry(dayNumber) {
       await saveObservation(day, payload);
       await refreshData();
       notice.className = "notice notice--success";
-      notice.textContent = "Zapisano dzień.";
+      notice.textContent = "Zapisano. Notatka jest widoczna poniżej.";
       notice.hidden = false;
+      const savedNote = app.querySelector("#savedNote");
+      const savedNoteText = savedNote?.querySelector(".saved-note__text");
+      if (savedNote && savedNoteText) {
+        savedNoteText.textContent = payload.notes || "Ten dzień zapisano bez dodatkowej notatki.";
+        savedNote.hidden = false;
+      }
     } catch (error) {
       notice.className = "notice notice--error";
       notice.textContent = translateError(error.message);

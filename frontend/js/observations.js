@@ -42,7 +42,12 @@ export function renderObservationFormHtml(dayNumber, observation) {
         </label>
 
         <div class="scale-help" aria-label="Legenda skali">
-          ${SCALE.map((item) => `<div class="scale-help__item"><strong>${item.label}</strong> ${escapeHtml(item.title)}<br>${escapeHtml(item.description)}</div>`).join("")}
+          ${SCALE.map((item) => `
+            <div class="scale-help__item">
+              <span class="state-icon ${item.iconClass}" aria-hidden="true">${item.icon}</span>
+              <span><strong>${item.label}</strong><small>${escapeHtml(item.title)}</small></span>
+            </div>
+          `).join("")}
         </div>
 
         <div class="score-grid">
@@ -65,8 +70,8 @@ export function renderObservationFormHtml(dayNumber, observation) {
                         data-value="${item.value}"
                         aria-pressed="${value === item.value ? "true" : "false"}"
                       >
-                        <span class="score-options__icon" aria-hidden="true">${item.icon}</span>
-                        <span class="score-options__label">${escapeHtml(item.label)}</span>
+                        <span class="score-options__icon state-icon ${item.iconClass}" aria-hidden="true">${item.icon}</span>
+                        <span class="score-options__label visually-hidden">${escapeHtml(item.label)}</span>
                       </button>
                     `,
                   ).join("")}
@@ -84,6 +89,10 @@ export function renderObservationFormHtml(dayNumber, observation) {
 
         <button class="button" type="submit">Zapisz obserwację</button>
         <p class="notice" id="formNotice" hidden></p>
+        <article class="saved-note" id="savedNote" ${row.notes ? "" : "hidden"}>
+          <p class="saved-note__label">Zapisana notatka</p>
+          <p class="saved-note__text">${escapeHtml(row.notes || "")}</p>
+        </article>
       </form>
     </section>
   `;
