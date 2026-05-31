@@ -49,25 +49,7 @@ export const SUPABASE_CONFIG = {
 
 The anon key is intended for browser use. Access control is handled by Row Level Security policies.
 
-For GitHub Pages, the preferred setup is to place the values in GitHub Actions settings instead of editing the committed file:
-
-```text
-Repository -> Settings -> Secrets and variables -> Actions
-```
-
-Add a variable:
-
-```text
-SUPABASE_URL
-```
-
-Add a secret:
-
-```text
-SUPABASE_ANON_KEY
-```
-
-The Pages workflow injects these values into `frontend/js/config.js` during deployment.
+For the current GitHub Pages setup, `frontend/js/config.js` is committed because Pages publishes directly from `main / root`. The anon key is browser-facing; Row Level Security policies protect the data.
 
 ## Authentication Settings
 
