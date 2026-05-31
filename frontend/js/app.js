@@ -2,10 +2,10 @@ import { isSupabaseConfigured, supabase } from "./supabaseClient.js";
 import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js";
 import { loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer } from "./api.js";
 import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js";
-import { renderHistoryHtml, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js";
 import { renderReportHtml, renderSummaryHtml } from "./reports.js";
 import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js";
-import { completionCount, escapeHtml, round } from "./utils.js";
+import { completionCount, escapeHtml, parseNotes, round, serializeNotes } from "./utils.js";
 import { getRoute, navigate } from "./router.js";
 
 const app = document.querySelector("#app");
@@ -252,17 +252,25 @@ function renderEntry(dayNumber) {
     const form = event.currentTarget;
     const notice = app.querySelector("#formNotice");
     const payload = readObservationForm(form);
+    const currentObservation = observations.find((item) => item.day_number === day);
+    const existingNotes = parseNotes(currentObservation?.notes);
+    const nextNoteText = payload.notes.trim();
+    const nextNotes = nextNoteText
+      ? [...existingNotes, { text: nextNoteText, created_at: new Date().toISOString() }]
+      : existingNotes;
+    payload.notes = serializeNotes(nextNotes);
 
     try {
       await saveObservation(day, payload);
       await refreshData();
       notice.className = "notice notice--success";
-      notice.textContent = "Zapisano. Notatka jest widoczna poniżej.";
+      notice.textContent = nextNoteText ? "Zapisano. Notatka została dodana do listy." : "Zapisano obserwację.";
       notice.hidden = false;
+      form.querySelector('textarea[name="notes"]').value = "";
       const savedNote = app.querySelector("#savedNote");
-      const savedNoteText = savedNote?.querySelector(".saved-note__text");
-      if (savedNote && savedNoteText) {
-        savedNoteText.textContent = payload.notes || "Ten dzień zapisano bez dodatkowej notatki.";
+      const savedNoteList = savedNote?.querySelector(".saved-note__list");
+      if (savedNote && savedNoteList) {
+        savedNoteList.innerHTML = renderNotesList(nextNotes);
         savedNote.hidden = false;
       }
     } catch (error) {

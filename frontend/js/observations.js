@@ -1,5 +1,5 @@
 import { EMPTY_OBSERVATION, OBSERVATION_FIELDS, SCALE, TOTAL_DAYS } from "./constants.js";
-import { clampDay, completionCount, dayAverage, escapeHtml, formatDate, round, todayIso } from "./utils.js";
+import { clampDay, completionCount, dayAverage, escapeHtml, formatDate, parseNotes, round, todayIso } from "./utils.js";
 
 export function mergeObservation(observation) {
   return {
@@ -24,6 +24,7 @@ export function renderDayPickerHtml(currentDay) {
 
 export function renderObservationFormHtml(dayNumber, observation) {
   const row = mergeObservation(observation);
+  const notes = parseNotes(row.notes);
 
   return `
     <section class="dashboard">
@@ -87,15 +88,17 @@ export function renderObservationFormHtml(dayNumber, observation) {
         </div>
 
         <label class="field">
-          <span class="field__label">Notatki i konkretne obserwacje</span>
-          <textarea class="field__textarea" name="notes" placeholder="Np. płacz 10 minut przy rozstaniu, po odbiorze pokazała zabawkę...">${escapeHtml(row.notes)}</textarea>
+          <span class="field__label">Dodaj notatkę</span>
+          <textarea class="field__textarea" name="notes" placeholder="Np. płacz 10 minut przy rozstaniu, po odbiorze pokazała zabawkę..."></textarea>
         </label>
 
         <button class="button" type="submit">Zapisz obserwację</button>
         <p class="notice" id="formNotice" hidden></p>
-        <article class="saved-note" id="savedNote" ${row.notes ? "" : "hidden"}>
-          <p class="saved-note__label">Zapisana notatka</p>
-          <p class="saved-note__text">${escapeHtml(row.notes || "")}</p>
+        <article class="saved-note" id="savedNote" ${notes.length ? "" : "hidden"}>
+          <p class="saved-note__label">Zapisane notatki</p>
+          <div class="saved-note__list">
+            ${renderNotesList(notes)}
+          </div>
         </article>
       </form>
     </section>
@@ -115,6 +118,22 @@ export function readObservationForm(form) {
   });
 
   return payload;
+}
+
+export function renderNotesList(notes) {
+  if (!notes.length) {
+    return `<p class="saved-note__empty">Brak zapisanych notatek dla tego dnia.</p>`;
+  }
+
+  return notes
+    .map(
+      (note) => `
+        <div class="saved-note__item">
+          <p class="saved-note__text">${escapeHtml(note.text)}</p>
+        </div>
+      `,
+    )
+    .join("");
 }
 
 export function wireScoreButtons(root) {

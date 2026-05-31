@@ -76,3 +76,36 @@ export function byDay(observations) {
   return map;
 }
 
+export function parseNotes(value) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => ({
+          text: String(item.text ?? "").trim(),
+          created_at: item.created_at ?? null,
+        }))
+        .filter((item) => item.text);
+    }
+  } catch (_error) {
+    // Older entries were stored as plain text.
+  }
+
+  const text = String(value).trim();
+  return text ? [{ text, created_at: null }] : [];
+}
+
+export function serializeNotes(notes) {
+  return JSON.stringify(
+    notes
+      .map((item) => ({
+        text: String(item.text ?? "").trim(),
+        created_at: item.created_at ?? new Date().toISOString(),
+      }))
+      .filter((item) => item.text),
+  );
+}

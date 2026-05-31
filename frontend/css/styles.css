@@ -342,6 +342,23 @@ button {
   line-height: 1.45;
 }
 
+.saved-note__list {
+  display: grid;
+  gap: 8px;
+}
+
+.saved-note__item {
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #dbeadd;
+  border-radius: var(--radius);
+}
+
+.saved-note__empty {
+  margin: 0;
+  color: var(--color-muted);
+}
+
 .dashboard {
   display: grid;
   gap: 16px;
