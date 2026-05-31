@@ -60,6 +60,9 @@ export function renderObservationFormHtml(dayNumber, observation) {
             const value = row[field.key];
             return `
               <fieldset class="score-row">
+                <button class="score-row__clear" type="button" data-clear-score data-field="${field.key}" aria-label="Wyczyść odpowiedź: ${escapeHtml(field.label)}" title="Wyczyść odpowiedź">
+                  <span aria-hidden="true">×</span>
+                </button>
                 <div class="score-row__head">
                   <legend class="score-row__title">${escapeHtml(field.label)}</legend>
                   <p class="score-row__hint">${escapeHtml(field.help)}</p>
@@ -81,9 +84,6 @@ export function renderObservationFormHtml(dayNumber, observation) {
                     `,
                   ).join("")}
                 </div>
-                <button class="score-row__clear" type="button" data-clear-score data-field="${field.key}">
-                  Wyczyść odpowiedź
-                </button>
                 <input type="hidden" name="${field.key}" value="${Number.isInteger(value) ? value : ""}">
               </fieldset>
             `;
