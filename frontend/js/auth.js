@@ -25,6 +25,7 @@ export async function signUp(email, password, displayName) {
     email,
     password,
     options: {
+      emailRedirectTo: "https://domindev.github.io/DominDev-TenderNotes/",
       data: {
         display_name: displayName,
       },
@@ -58,4 +59,3 @@ export function onAuthStateChange(callback) {
 
   return subscription;
 }
-
