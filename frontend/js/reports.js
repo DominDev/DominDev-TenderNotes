@@ -178,7 +178,7 @@ export function renderReportHtml(observations) {
             </div>
           </div>
         </article>
-        <article class="chart-panel">
+        <article class="chart-panel chart-panel--distribution">
           <h3 class="chart-panel__title">Rozkład nastrojów</h3>
           <canvas class="chart" id="distributionChart"></canvas>
         </article>

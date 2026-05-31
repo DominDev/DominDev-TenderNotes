@@ -396,11 +396,21 @@ function renderHistory() {
 
 function renderReport() {
   app.innerHTML = renderReportHtml(observations);
-  requestAnimationFrame(() => {
-    drawTrend(document.querySelector("#trendChart"), observations);
-    drawAreaAverages(document.querySelector("#areaChart"), observations);
-    drawScoreDistribution(document.querySelector("#distributionChart"), observations);
-  });
+  requestAnimationFrame(drawReportCharts);
+}
+
+function drawReportCharts() {
+  const trendChart = document.querySelector("#trendChart");
+  const areaChart = document.querySelector("#areaChart");
+  const distributionChart = document.querySelector("#distributionChart");
+
+  if (!trendChart || !areaChart || !distributionChart) {
+    return;
+  }
+
+  drawTrend(trendChart, observations);
+  drawAreaAverages(areaChart, observations);
+  drawScoreDistribution(distributionChart, observations);
 }
 
 async function renderSummary() {
@@ -468,5 +478,7 @@ logoutButton.addEventListener("click", async () => {
 });
 
 window.addEventListener("hashchange", renderRoute);
+window.addEventListener("beforeprint", drawReportCharts);
+window.addEventListener("afterprint", drawReportCharts);
 
 boot();
