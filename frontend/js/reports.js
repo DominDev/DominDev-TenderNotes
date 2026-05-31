@@ -159,21 +159,23 @@ export function renderReportHtml(observations) {
           <h3 class="chart-panel__title">Trend średniej dziennej</h3>
           <canvas class="chart" id="trendChart"></canvas>
         </article>
-        <article class="chart-panel">
+        <article class="chart-panel chart-panel--area">
           <h3 class="chart-panel__title">Średnia per obszar</h3>
-          <canvas class="chart" id="areaChart"></canvas>
-          <div class="chart-legend" aria-label="Podpisy wykresu średnich per obszar">
-            ${report.areaAverages
-              .map(
-                (item, index) => `
-                  <div class="chart-legend__item">
-                    <span class="chart-legend__swatch" style="background: ${AREA_COLORS[index % AREA_COLORS.length]}"></span>
-                    <span class="chart-legend__label">${escapeHtml(item.label)}</span>
-                    <strong class="chart-legend__value">${round(item.average)}</strong>
-                  </div>
-                `,
-              )
-              .join("")}
+          <div class="chart-panel__body chart-panel__body--area">
+            <canvas class="chart" id="areaChart"></canvas>
+            <div class="chart-legend" aria-label="Podpisy wykresu średnich per obszar">
+              ${report.areaAverages
+                .map(
+                  (item, index) => `
+                    <div class="chart-legend__item">
+                      <span class="chart-legend__swatch" style="background: ${AREA_COLORS[index % AREA_COLORS.length]}"></span>
+                      <span class="chart-legend__label">${escapeHtml(item.label)}</span>
+                      <strong class="chart-legend__value">${round(item.average)}</strong>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
           </div>
         </article>
         <article class="chart-panel">

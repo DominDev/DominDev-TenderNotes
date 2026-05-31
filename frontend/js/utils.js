@@ -89,17 +89,22 @@ export function parseNotes(value) {
     return [];
   }
 
+  if (Array.isArray(value)) {
+    return normalizeNotes(value);
+  }
+
+  if (typeof value === "object") {
+    return normalizeNotes([value]);
+  }
+
   try {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) {
-      return parsed
-        .map((item) => ({
-          id: item.id ?? makeId("note"),
-          text: String(item.text ?? "").trim(),
-          created_at: item.created_at ?? null,
-          updated_at: item.updated_at ?? null,
-        }))
-        .filter((item) => item.text);
+      return normalizeNotes(parsed);
+    }
+
+    if (parsed && typeof parsed === "object") {
+      return normalizeNotes([parsed]);
     }
   } catch (_error) {
     // Older entries were stored as plain text.
@@ -107,6 +112,17 @@ export function parseNotes(value) {
 
   const text = String(value).trim();
   return text ? [{ id: makeId("note"), text, created_at: null, updated_at: null }] : [];
+}
+
+function normalizeNotes(notes) {
+  return notes
+    .map((item) => ({
+      id: item.id ?? makeId("note"),
+      text: String(item.text ?? item.note ?? item.content ?? "").trim(),
+      created_at: item.created_at ?? null,
+      updated_at: item.updated_at ?? null,
+    }))
+    .filter((item) => item.text);
 }
 
 export function serializeNotes(notes) {

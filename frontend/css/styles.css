@@ -680,6 +680,11 @@ button {
   display: block;
 }
 
+.chart-panel__body {
+  display: grid;
+  gap: 10px;
+}
+
 .chart-legend {
   display: grid;
   gap: 8px;
@@ -850,5 +855,97 @@ button {
 
   .chart-panel--wide {
     grid-column: 1 / -1;
+  }
+
+  .chart-panel__body--area {
+    grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.9fr);
+    align-items: center;
+  }
+
+  .chart-panel__body--area .chart-legend {
+    margin-top: 0;
+  }
+}
+
+@media print {
+  :root {
+    --color-paper: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-strong: #ffffff;
+    --shadow-soft: none;
+  }
+
+  body {
+    color: #1f1f1f;
+    background: #ffffff;
+  }
+
+  .topbar,
+  .tabbar,
+  .action-row,
+  button {
+    display: none !important;
+  }
+
+  .app-shell {
+    min-height: auto;
+    display: block;
+  }
+
+  .main {
+    width: 100%;
+    padding: 0;
+  }
+
+  .dashboard {
+    gap: 12px;
+  }
+
+  .hero,
+  .panel,
+  .metric,
+  .chart-panel,
+  .insights__item,
+  .report-notes__day {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .hero {
+    padding: 0 0 10px;
+    border: 0;
+  }
+
+  .hero__title {
+    font-size: 2.1rem;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chart-panel--wide {
+    grid-column: 1 / -1;
+  }
+
+  .chart-panel__body--area {
+    grid-template-columns: minmax(0, 1.15fr) minmax(170px, 0.85fr);
+    align-items: center;
+  }
+
+  .chart-panel__body--area .chart-legend {
+    margin-top: 0;
+  }
+
+  .chart {
+    height: 190px;
+  }
+
+  .report-notes__items {
+    padding-left: 16px;
   }
 }
