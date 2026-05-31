@@ -60,9 +60,6 @@ export function renderObservationFormHtml(dayNumber, observation) {
             const value = row[field.key];
             return `
               <fieldset class="score-row">
-                <button class="score-row__clear" type="button" data-clear-score data-field="${field.key}" aria-label="Wyczyść odpowiedź: ${escapeHtml(field.label)}" title="Wyczyść odpowiedź">
-                  <span aria-hidden="true">×</span>
-                </button>
                 <div class="score-row__head">
                   <legend class="score-row__title">${escapeHtml(field.label)}</legend>
                   <p class="score-row__hint">${escapeHtml(field.help)}</p>
@@ -145,23 +142,13 @@ export function wireScoreButtons(root) {
       const field = button.dataset.field;
       const value = button.dataset.value;
       const row = button.closest(".score-row");
-      row.querySelector(`input[name="${field}"]`).value = value;
+      const input = row.querySelector(`input[name="${field}"]`);
+      const shouldClear = input.value === value;
+      input.value = shouldClear ? "" : value;
       row.querySelectorAll("[data-score-button]").forEach((item) => {
-        const isSelected = item === button;
+        const isSelected = !shouldClear && item === button;
         item.classList.toggle("is-selected", isSelected);
         item.setAttribute("aria-pressed", String(isSelected));
-      });
-    });
-  });
-
-  root.querySelectorAll("[data-clear-score]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const field = button.dataset.field;
-      const row = button.closest(".score-row");
-      row.querySelector(`input[name="${field}"]`).value = "";
-      row.querySelectorAll("[data-score-button]").forEach((item) => {
-        item.classList.remove("is-selected");
-        item.setAttribute("aria-pressed", "false");
       });
     });
   });
