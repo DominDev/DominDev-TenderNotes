@@ -105,7 +105,7 @@ export function drawTrend(canvas, observations) {
 
 export function drawAreaAverages(canvas, observations) {
   const { ctx, width, height } = setupCanvas(canvas);
-  const padding = { top: 18, right: 10, bottom: 88, left: 28 };
+  const padding = { top: 18, right: 10, bottom: 22, left: 28 };
   clear(ctx, width, height);
   drawAxes(ctx, width, height, padding);
 
@@ -128,14 +128,6 @@ export function drawAreaAverages(canvas, observations) {
     const y = height - padding.bottom - barHeight;
     ctx.fillStyle = item.average !== null && item.average < 1 ? "#b8583c" : "#2f746f";
     ctx.fillRect(x, y, barWidth, barHeight);
-
-    ctx.fillStyle = "#756a61";
-    ctx.save();
-    ctx.translate(x + barWidth / 2, height - 70);
-    ctx.rotate(-Math.PI / 2);
-    ctx.font = "10px system-ui";
-    ctx.fillText(item.field.shortLabel, 0, 0);
-    ctx.restore();
 
     if (item.average !== null) {
       ctx.fillStyle = "#24201d";

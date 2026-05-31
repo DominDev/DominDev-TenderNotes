@@ -37,6 +37,10 @@ export function buildReport(observations) {
     average,
     scoreCounts,
     weakest,
+    areaAverages: OBSERVATION_FIELDS.map((field) => ({
+      label: field.shortLabel,
+      average: fieldAverage(observations, field.key),
+    })),
     insights: buildInsights(completedDays, average, scoreCounts, weakest),
   };
 }
@@ -119,6 +123,19 @@ export function renderReportHtml(observations) {
         <article class="chart-panel">
           <h3 class="chart-panel__title">Średnia per obszar</h3>
           <canvas class="chart" id="areaChart"></canvas>
+          <div class="chart-legend" aria-label="Podpisy wykresu średnich per obszar">
+            ${report.areaAverages
+              .map(
+                (item, index) => `
+                  <div class="chart-legend__item">
+                    <span class="chart-legend__swatch" style="--swatch-index: ${index}"></span>
+                    <span class="chart-legend__label">${escapeHtml(item.label)}</span>
+                    <strong class="chart-legend__value">${round(item.average)}</strong>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
         </article>
         <article class="chart-panel">
           <h3 class="chart-panel__title">Rozkład nastrojów</h3>
