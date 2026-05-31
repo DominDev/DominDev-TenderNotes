@@ -352,15 +352,54 @@ button {
 }
 
 .saved-note__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
   padding: 10px;
   background: #ffffff;
   border: 1px solid #dbeadd;
   border-radius: var(--radius);
 }
 
+.saved-note__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.saved-note__button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--color-forest);
+  background: #f8fbf7;
+  border: 1px solid #dbeadd;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.saved-note__button:hover {
+  background: #eef7f0;
+}
+
+.saved-note__button--danger {
+  color: #8b3b2e;
+  background: #fff7f3;
+  border-color: #edd4c8;
+}
+
 .saved-note__empty {
   margin: 0;
   color: var(--color-muted);
+}
+
+.note-actions {
+  display: grid;
+  gap: 8px;
 }
 
 .dashboard {

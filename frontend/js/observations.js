@@ -88,11 +88,14 @@ export function renderObservationFormHtml(dayNumber, observation) {
         </div>
 
         <label class="field">
-          <span class="field__label">Dodaj notatkę</span>
+          <span class="field__label" id="noteFieldLabel">Dodaj notatkę</span>
           <textarea class="field__textarea" name="notes" placeholder="Np. płacz 10 minut przy rozstaniu, po odbiorze pokazała zabawkę..."></textarea>
         </label>
 
-        <button class="button" type="submit">Zapisz obserwację</button>
+        <div class="note-actions">
+          <button class="button" id="noteSubmitButton" type="submit">Dodaj notatkę</button>
+          <button class="button button--ghost" id="noteCancelButton" type="button" hidden>Anuluj edycję</button>
+        </div>
         <p class="notice" id="formNotice" hidden></p>
         <article class="saved-note" id="savedNote" ${notes.length ? "" : "hidden"}>
           <p class="saved-note__label">Zapisane notatki</p>
@@ -127,18 +130,26 @@ export function renderNotesList(notes) {
 
   return notes
     .map(
-      (note) => `
-        <div class="saved-note__item">
+      (note, index) => `
+        <div class="saved-note__item" data-note-index="${index}">
           <p class="saved-note__text">${escapeHtml(note.text)}</p>
+          <div class="saved-note__actions" aria-label="Akcje notatki">
+            <button class="saved-note__button" type="button" data-note-edit="${index}" aria-label="Edytuj notatkę" title="Edytuj notatkę">
+              <span aria-hidden="true">✎</span>
+            </button>
+            <button class="saved-note__button saved-note__button--danger" type="button" data-note-delete="${index}" aria-label="Usuń notatkę" title="Usuń notatkę">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
         </div>
       `,
     )
     .join("");
 }
 
-export function wireScoreButtons(root) {
+export function wireScoreButtons(root, onChange = null) {
   root.querySelectorAll("[data-score-button]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const field = button.dataset.field;
       const value = button.dataset.value;
       const row = button.closest(".score-row");
@@ -150,6 +161,13 @@ export function wireScoreButtons(root) {
         item.classList.toggle("is-selected", isSelected);
         item.setAttribute("aria-pressed", String(isSelected));
       });
+
+      if (onChange) {
+        await onChange({
+          field,
+          value: shouldClear ? null : Number.parseInt(value, 10),
+        });
+      }
     });
   });
 }

@@ -5,7 +5,7 @@ import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js"
 import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js";
 import { renderReportHtml, renderSummaryHtml } from "./reports.js";
 import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js";
-import { completionCount, escapeHtml, parseNotes, round, serializeNotes } from "./utils.js";
+import { completionCount, escapeHtml, makeId, parseNotes, round, serializeNotes } from "./utils.js";
 import { getRoute, navigate } from "./router.js";
 
 const app = document.querySelector("#app");
@@ -241,44 +241,144 @@ function renderEntry(dayNumber) {
   const day = Math.max(1, Math.min(TOTAL_DAYS, dayNumber));
   const observation = observations.find((item) => item.day_number === day);
   app.innerHTML = renderObservationFormHtml(day, observation);
-  wireScoreButtons(app);
+  const form = app.querySelector("#observationForm");
+  const notice = app.querySelector("#formNotice");
+  const getCurrentObservation = () => observations.find((item) => item.day_number === day);
+  const buildPayload = (notes) => {
+    const payload = readObservationForm(form);
+    payload.notes = serializeNotes(notes);
+    return payload;
+  };
+
+  wireScoreButtons(app, async () => {
+    const currentNotes = parseNotes(getCurrentObservation()?.notes);
+
+    try {
+      await saveObservation(day, buildPayload(currentNotes));
+      await refreshData();
+      setNotice(notice, "success", "Odpowiedź zapisana.");
+    } catch (error) {
+      setNotice(notice, "error", translateError(error.message));
+    }
+  });
 
   app.querySelector("#daySelect").addEventListener("change", (event) => {
     navigate("entry", { day: event.target.value });
   });
 
-  app.querySelector("#observationForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const notice = app.querySelector("#formNotice");
-    const payload = readObservationForm(form);
-    const currentObservation = observations.find((item) => item.day_number === day);
-    const existingNotes = parseNotes(currentObservation?.notes);
-    const nextNoteText = payload.notes.trim();
-    const nextNotes = nextNoteText
-      ? [...existingNotes, { text: nextNoteText, created_at: new Date().toISOString() }]
-      : existingNotes;
-    payload.notes = serializeNotes(nextNotes);
+  app.querySelector("#noteCancelButton").addEventListener("click", () => {
+    clearNoteEditState(form);
+    setNotice(notice, "success", "Edycja notatki anulowana.");
+  });
 
-    try {
-      await saveObservation(day, payload);
-      await refreshData();
-      notice.className = "notice notice--success";
-      notice.textContent = nextNoteText ? "Zapisano. Notatka została dodana do listy." : "Zapisano obserwację.";
-      notice.hidden = false;
-      form.querySelector('textarea[name="notes"]').value = "";
-      const savedNote = app.querySelector("#savedNote");
-      const savedNoteList = savedNote?.querySelector(".saved-note__list");
-      if (savedNote && savedNoteList) {
-        savedNoteList.innerHTML = renderNotesList(nextNotes);
-        savedNote.hidden = false;
+  app.querySelector("#savedNote").addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-note-edit]");
+    const deleteButton = event.target.closest("[data-note-delete]");
+    const currentNotes = parseNotes(getCurrentObservation()?.notes);
+
+    if (editButton) {
+      const noteIndex = Number.parseInt(editButton.dataset.noteEdit, 10);
+      const note = currentNotes[noteIndex];
+
+      if (!note) {
+        return;
       }
-    } catch (error) {
-      notice.className = "notice notice--error";
-      notice.textContent = translateError(error.message);
-      notice.hidden = false;
+
+      form.dataset.editingNoteIndex = String(noteIndex);
+      form.querySelector('textarea[name="notes"]').value = note.text;
+      form.querySelector("#noteFieldLabel").textContent = "Edytuj notatkę";
+      form.querySelector("#noteSubmitButton").textContent = "Zapisz notatkę";
+      form.querySelector("#noteCancelButton").hidden = false;
+      form.querySelector('textarea[name="notes"]').focus();
+      return;
+    }
+
+    if (deleteButton) {
+      const noteIndex = Number.parseInt(deleteButton.dataset.noteDelete, 10);
+      const nextNotes = currentNotes.filter((_note, index) => index !== noteIndex);
+
+      try {
+        await saveObservation(day, buildPayload(nextNotes));
+        await refreshData();
+        renderSavedNotes(app, nextNotes);
+        clearNoteEditState(form);
+        setNotice(notice, "success", "Notatka usunięta.");
+      } catch (error) {
+        setNotice(notice, "error", translateError(error.message));
+      }
     }
   });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const currentObservation = observations.find((item) => item.day_number === day);
+    const existingNotes = parseNotes(currentObservation?.notes);
+    const textarea = form.querySelector('textarea[name="notes"]');
+    const noteText = textarea.value.trim();
+    const editingIndex = Number.parseInt(form.dataset.editingNoteIndex ?? "", 10);
+    const isEditing = Number.isInteger(editingIndex) && existingNotes[editingIndex];
+
+    if (!noteText) {
+      setNotice(notice, "error", isEditing ? "Wpisz treść notatki albo anuluj edycję." : "Wpisz notatkę przed dodaniem.");
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const nextNotes = [...existingNotes];
+    let message = "Notatka dodana.";
+
+    if (isEditing) {
+      nextNotes[editingIndex] = {
+        ...nextNotes[editingIndex],
+        text: noteText,
+        updated_at: now,
+      };
+      message = "Notatka zaktualizowana.";
+    } else {
+      nextNotes.push({
+        id: makeId("note"),
+        text: noteText,
+        created_at: now,
+        updated_at: null,
+      });
+    }
+
+    try {
+      await saveObservation(day, buildPayload(nextNotes));
+      await refreshData();
+      clearNoteEditState(form);
+      renderSavedNotes(app, nextNotes);
+      setNotice(notice, "success", message);
+    } catch (error) {
+      setNotice(notice, "error", translateError(error.message));
+    }
+  });
+}
+
+function setNotice(notice, type, message) {
+  notice.className = `notice notice--${type}`;
+  notice.textContent = message;
+  notice.hidden = false;
+}
+
+function renderSavedNotes(root, notes) {
+  const savedNote = root.querySelector("#savedNote");
+  const savedNoteList = savedNote?.querySelector(".saved-note__list");
+
+  if (!savedNote || !savedNoteList) {
+    return;
+  }
+
+  savedNoteList.innerHTML = renderNotesList(notes);
+  savedNote.hidden = !notes.length;
+}
+
+function clearNoteEditState(form) {
+  delete form.dataset.editingNoteIndex;
+  form.querySelector('textarea[name="notes"]').value = "";
+  form.querySelector("#noteFieldLabel").textContent = "Dodaj notatkę";
+  form.querySelector("#noteSubmitButton").textContent = "Dodaj notatkę";
+  form.querySelector("#noteCancelButton").hidden = true;
 }
 
 function renderHistory() {

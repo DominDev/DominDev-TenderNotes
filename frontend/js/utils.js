@@ -17,6 +17,14 @@ export function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+export function makeId(prefix = "id") {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export function formatDate(dateValue) {
   if (!dateValue) {
     return "Bez daty";
@@ -86,8 +94,10 @@ export function parseNotes(value) {
     if (Array.isArray(parsed)) {
       return parsed
         .map((item) => ({
+          id: item.id ?? makeId("note"),
           text: String(item.text ?? "").trim(),
           created_at: item.created_at ?? null,
+          updated_at: item.updated_at ?? null,
         }))
         .filter((item) => item.text);
     }
@@ -96,15 +106,17 @@ export function parseNotes(value) {
   }
 
   const text = String(value).trim();
-  return text ? [{ text, created_at: null }] : [];
+  return text ? [{ id: makeId("note"), text, created_at: null, updated_at: null }] : [];
 }
 
 export function serializeNotes(notes) {
   return JSON.stringify(
     notes
       .map((item) => ({
+        id: item.id ?? makeId("note"),
         text: String(item.text ?? "").trim(),
         created_at: item.created_at ?? new Date().toISOString(),
+        updated_at: item.updated_at ?? null,
       }))
       .filter((item) => item.text),
   );
