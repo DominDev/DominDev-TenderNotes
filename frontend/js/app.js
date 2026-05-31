@@ -181,6 +181,15 @@ function renderRoute() {
   } else {
     renderDashboard();
   }
+
+  resetViewScroll();
+}
+
+function resetViewScroll() {
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    app.scrollTo?.({ top: 0, left: 0, behavior: "instant" });
+  });
 }
 
 function renderDashboard() {
