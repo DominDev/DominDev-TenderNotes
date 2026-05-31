@@ -1,4 +1,5 @@
 import { OBSERVATION_FIELDS, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
+import { AREA_COLORS } from "./charts.js";
 import { completionCount, dayAverage, escapeHtml, round } from "./utils.js";
 
 export function buildReport(observations) {
@@ -128,7 +129,7 @@ export function renderReportHtml(observations) {
               .map(
                 (item, index) => `
                   <div class="chart-legend__item">
-                    <span class="chart-legend__swatch" style="--swatch-index: ${index}"></span>
+                    <span class="chart-legend__swatch" style="background: ${AREA_COLORS[index % AREA_COLORS.length]}"></span>
                     <span class="chart-legend__label">${escapeHtml(item.label)}</span>
                     <strong class="chart-legend__value">${round(item.average)}</strong>
                   </div>

@@ -1,6 +1,18 @@
 import { OBSERVATION_FIELDS } from "./constants.js";
 import { dayAverage, round } from "./utils.js";
 
+export const AREA_COLORS = [
+  "#2f746f",
+  "#b8583c",
+  "#4976a8",
+  "#8b6f35",
+  "#6d7891",
+  "#4f8a59",
+  "#7b5ea7",
+  "#c06f3d",
+  "#3f7f96",
+];
+
 function setupCanvas(canvas) {
   const rect = canvas.getBoundingClientRect();
   const scale = window.devicePixelRatio || 1;
@@ -126,7 +138,7 @@ export function drawAreaAverages(canvas, observations) {
     const x = padding.left + index * (barWidth + barGap);
     const barHeight = item.average === null ? 0 : (plotHeight / 2) * item.average;
     const y = height - padding.bottom - barHeight;
-    ctx.fillStyle = item.average !== null && item.average < 1 ? "#b8583c" : "#2f746f";
+    ctx.fillStyle = AREA_COLORS[index % AREA_COLORS.length];
     ctx.fillRect(x, y, barWidth, barHeight);
 
     if (item.average !== null) {

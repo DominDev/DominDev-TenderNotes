@@ -659,7 +659,6 @@ button {
 .chart-legend__swatch {
   width: 10px;
   height: 10px;
-  background: var(--color-accent);
   border-radius: 999px;
 }
 
