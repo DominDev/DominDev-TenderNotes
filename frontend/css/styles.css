@@ -522,7 +522,6 @@ button {
 
 .scale-help {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 0 0 16px;
 }
@@ -535,22 +534,33 @@ button {
 
 .scale-help__item {
   display: grid;
-  justify-items: center;
-  gap: 6px;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 10px;
   padding: 10px;
   color: var(--color-muted);
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius);
-  text-align: center;
-  font-size: 0.78rem;
+  text-align: left;
+  font-size: 0.84rem;
   line-height: 1.35;
 }
 
 .scale-help__item small {
   display: block;
   margin-top: 2px;
-  font-size: 0.7rem;
+  color: var(--color-ink);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.scale-help__item em {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-style: normal;
 }
 
 .state-icon {

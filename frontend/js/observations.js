@@ -45,7 +45,11 @@ export function renderObservationFormHtml(dayNumber, observation) {
           ${SCALE.map((item) => `
             <div class="scale-help__item">
               <span class="state-icon ${item.iconClass}" aria-hidden="true">${item.icon}</span>
-              <span><strong>${item.label}</strong><small>${escapeHtml(item.title)}</small></span>
+              <span>
+                <strong>${item.label}</strong>
+                <small>${escapeHtml(item.title)}</small>
+                <em>${escapeHtml(item.description)}</em>
+              </span>
             </div>
           `).join("")}
         </div>

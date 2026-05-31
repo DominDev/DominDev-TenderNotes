@@ -5,7 +5,7 @@ export const SCALE = [
   {
     value: 0,
     label: "Trudno",
-    icon: "●",
+    icon: "☁",
     iconClass: "state-icon--hard",
     title: "Potrzebuje wsparcia",
     description: "Duży płacz, wycofanie, brak kontaktu albo wyraźna zmiana.",
@@ -16,7 +16,7 @@ export const SCALE = [
     icon: "◐",
     iconClass: "state-icon--mixed",
     title: "Różnie w ciągu dnia",
-    description: "Trochę niepewności lub zmęczenia, ale kontakt jest możliwy.",
+    description: "Trochę niepewności lub zmęczenia, ale kontakt i ukojenie są możliwe.",
   },
   {
     value: 2,
@@ -24,7 +24,7 @@ export const SCALE = [
     icon: "✓",
     iconClass: "state-icon--calm",
     title: "Dzień wygląda dobrze",
-    description: "Kontakt, zabawa, ukojenie i powrót do równowagi.",
+    description: "Kontakt, zabawa, ukojenie i powrót do równowagi wyglądają typowo.",
   },
 ];
 
