@@ -177,11 +177,11 @@ button {
 }
 
 .auth-form {
-  gap: 15px;
+  gap: 16px;
 }
 
 .auth-form .auth-switch {
-  margin-bottom: 5px;
+  margin-bottom: 14px;
 }
 
 .auth-form .button {
