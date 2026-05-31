@@ -47,8 +47,8 @@ export function drawTrend(canvas, observations) {
 
   ctx.fillStyle = "#756a61";
   ctx.font = "12px system-ui";
-  ctx.fillText("2", 8, padding.top + 4);
-  ctx.fillText("0", 8, height - padding.bottom + 4);
+  ctx.fillText("✓", 10, padding.top + 4);
+  ctx.fillText("☁", 8, height - padding.bottom + 4);
 
   ctx.strokeStyle = "#2f746f";
   ctx.lineWidth = 3;
@@ -141,6 +141,7 @@ export function drawScoreDistribution(canvas, observations) {
   clear(ctx, width, height);
   drawAxes(ctx, width, height, padding);
 
+  const labels = ["Trudno", "Różnie", "Spokojnie"];
   const counts = [0, 1, 2].map((score) => ({
     score,
     count: observations.reduce((total, observation) => {
@@ -162,7 +163,6 @@ export function drawScoreDistribution(canvas, observations) {
     ctx.font = "13px system-ui";
     ctx.fillText(String(item.count), x + barWidth / 2 - 4, y - 7);
     ctx.fillStyle = "#756a61";
-    ctx.fillText(String(item.score), x + barWidth / 2 - 4, height - 8);
+    ctx.fillText(labels[item.score], Math.max(4, x + barWidth / 2 - 24), height - 8);
   });
 }
-

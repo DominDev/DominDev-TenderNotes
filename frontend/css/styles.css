@@ -60,6 +60,20 @@ button {
   backdrop-filter: blur(14px);
 }
 
+.brand-lockup {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-lockup__mark {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+}
+
 .topbar__eyebrow,
 .loading__brand,
 .section-label {
@@ -100,6 +114,15 @@ button {
   min-height: 88vh;
   align-content: center;
   gap: 22px;
+}
+
+.auth::before {
+  content: "";
+  width: 68px;
+  height: 68px;
+  display: block;
+  margin-bottom: -8px;
+  background: url("../assets/logo.svg") center / contain no-repeat;
 }
 
 .auth__brand {
@@ -411,17 +434,24 @@ button {
 
 .score-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
 .score-options__button {
-  min-height: 48px;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
   color: var(--color-ink);
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius);
-  font-weight: 820;
+  text-align: center;
+  font-weight: 780;
 }
 
 .score-options__button.is-selected {
@@ -430,10 +460,35 @@ button {
   border-color: var(--color-accent);
 }
 
+.score-options__icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: #f7f1ea;
+  border-radius: 999px;
+  font-size: 1.1rem;
+}
+
+.score-options__button.is-selected .score-options__icon {
+  color: var(--color-accent-strong);
+  background: #ffffff;
+}
+
+.score-options__label {
+  overflow-wrap: anywhere;
+}
+
 .scale-help {
   display: grid;
   gap: 8px;
   margin: 0 0 16px;
+}
+
+@media (min-width: 430px) {
+  .score-options__button {
+    min-height: 78px;
+  }
 }
 
 .scale-help__item {

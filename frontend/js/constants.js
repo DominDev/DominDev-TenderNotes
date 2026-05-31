@@ -4,21 +4,24 @@ export const TOTAL_DAYS = 14;
 export const SCALE = [
   {
     value: 0,
-    label: "0",
-    title: "Trudność wyraźna",
-    description: "Silny opór, apatia, brak kontaktu, duży płacz albo widoczna zmiana.",
+    label: "Trudno",
+    icon: "☁",
+    title: "Potrzebuje wsparcia",
+    description: "Duży płacz, wycofanie, brak kontaktu albo wyraźna zmiana.",
   },
   {
     value: 1,
-    label: "1",
-    title: "Reakcja mieszana",
-    description: "Niepewność, zmęczenie lub chwilowe wycofanie, ale kontakt jest możliwy.",
+    label: "Różnie",
+    icon: "◐",
+    title: "Różnie w ciągu dnia",
+    description: "Trochę niepewności lub zmęczenia, ale kontakt jest możliwy.",
   },
   {
     value: 2,
-    label: "2",
-    title: "Dobrze lub typowo",
-    description: "Kontakt, ukojenie, zabawa, reakcje i powrót do równowagi.",
+    label: "Spokojnie",
+    icon: "✓",
+    title: "Dzień wygląda dobrze",
+    description: "Kontakt, zabawa, ukojenie i powrót do równowagi.",
   },
 ];
 
@@ -119,4 +122,3 @@ export const EMPTY_OBSERVATION = {
   food: null,
   notes: "",
 };
-

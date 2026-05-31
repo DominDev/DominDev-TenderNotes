@@ -58,11 +58,11 @@ function buildInsights(completedDays, average, scoreCounts, weakest) {
   }
 
   if (average !== null && average >= 1.5) {
-    insights.push("Większość ocen wskazuje na funkcjonowanie typowe lub możliwe do ukojenia.");
+    insights.push("Większość odpowiedzi układa się w spokojny obraz dnia.");
   }
 
   if (zeroCount >= 6) {
-    insights.push("Oceny 0 pojawiają się kilka razy. Warto sprawdzić, czy dotyczą tych samych sytuacji i dni.");
+    insights.push("Stan „Trudno” pojawia się kilka razy. Warto sprawdzić, czy dotyczy tych samych sytuacji i dni.");
   }
 
   const repeatedWeakness = weakest.find((item) => item.zeros >= 3);
@@ -89,7 +89,7 @@ export function renderReportHtml(observations) {
       <div class="hero">
         <p class="section-label">Raport</p>
         <h2 class="hero__title">${round(report.average)}</h2>
-        <p class="hero__text">Średnia ze wszystkich ocen. Skala 0 oznacza wyraźną trudność, a 2 funkcjonowanie dobre lub typowe.</p>
+        <p class="hero__text">Im bliżej 2, tym więcej spokojnych obserwacji. Najważniejszy jest kierunek i powtarzalność, nie jeden wynik.</p>
       </div>
 
       <div class="metrics">
@@ -98,15 +98,15 @@ export function renderReportHtml(observations) {
           <p class="metric__value">${report.completedDays}/${report.totalDays}</p>
         </article>
         <article class="metric">
-          <p class="metric__label">Oceny 0</p>
+          <p class="metric__label">Trudno</p>
           <p class="metric__value">${report.scoreCounts[0]}</p>
         </article>
         <article class="metric">
-          <p class="metric__label">Oceny 1</p>
+          <p class="metric__label">Różnie</p>
           <p class="metric__value">${report.scoreCounts[1]}</p>
         </article>
         <article class="metric">
-          <p class="metric__label">Oceny 2</p>
+          <p class="metric__label">Spokojnie</p>
           <p class="metric__value">${report.scoreCounts[2]}</p>
         </article>
       </div>
@@ -121,7 +121,7 @@ export function renderReportHtml(observations) {
           <canvas class="chart" id="areaChart"></canvas>
         </article>
         <article class="chart-panel">
-          <h3 class="chart-panel__title">Rozkład ocen</h3>
+          <h3 class="chart-panel__title">Rozkład nastrojów</h3>
           <canvas class="chart" id="distributionChart"></canvas>
         </article>
       </section>
@@ -141,7 +141,7 @@ export function renderReportHtml(observations) {
               (item) => `
                 <li class="insights__item">
                   <strong>${escapeHtml(item.label)}</strong><br>
-                  Oceny 0: ${item.zeros}, średnia: ${round(item.average)}
+                  Dni z trudnością: ${item.zeros}, średnia: ${round(item.average)}
                 </li>
               `,
             )
@@ -203,4 +203,3 @@ export function renderSummaryHtml(answers) {
     </section>
   `;
 }
-

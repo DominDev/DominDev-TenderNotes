@@ -79,7 +79,7 @@ function renderAuth(message = "") {
       <div>
         <p class="section-label">TenderNotes</p>
         <h1 class="auth__brand">TenderNotes</h1>
-        <p class="auth__lead">Codzienny, spokojny zapis obserwacji. Dane są rozdzielone per konto i przechowywane w Supabase.</p>
+        <p class="auth__lead">Kilka minut dziennie, żeby zobaczyć spokojny wzorzec zamiast oceniać pojedynczy moment.</p>
       </div>
 
       <div class="panel">
@@ -196,9 +196,9 @@ function renderDashboard() {
       <div class="hero">
         <p class="section-label">TenderNotes</p>
         <h2 class="hero__title">Dzień po dniu</h2>
-        <p class="hero__text">Wypełnij krótką kartę raz dziennie. Najważniejszy jest wzorzec w czasie, nie pojedynczy wpis.</p>
+        <p class="hero__text">Zapisuj krótkie obserwacje po dniu. TenderNotes pomaga zauważyć, co się powtarza, a co było tylko chwilą.</p>
         <div class="hero__actions">
-          <button class="button" type="button" data-route-action="entry">Dodaj wpis</button>
+          <button class="button" type="button" data-route-action="entry">Wypełnij dzień</button>
           <button class="button button--secondary" type="button" data-route-action="report">Zobacz raport</button>
         </div>
       </div>
@@ -214,17 +214,17 @@ function renderDashboard() {
         </article>
         <article class="metric">
           <p class="metric__label">Średnia</p>
-          <p class="metric__value">${round(average)}</p>
+          <p class="metric__value">${round(average)}/2</p>
         </article>
         <article class="metric">
-          <p class="metric__label">Wpisane oceny</p>
+          <p class="metric__label">Zaznaczone pola</p>
           <p class="metric__value">${scoreCount}</p>
         </article>
       </div>
 
       <section class="panel">
         <h3 class="panel__title">Następny krok</h3>
-        <p class="panel__hint">Najbliższy niepełny dzień to dzień ${suggestedNextDay(observations)}.</p>
+        <p class="panel__hint">Najbliższy dzień do uzupełnienia: ${suggestedNextDay(observations)}. Wystarczy kilka spokojnych odpowiedzi i krótka notatka.</p>
         <div class="action-row">
           <button class="button button--secondary" type="button" data-route-action="entry" data-day="${suggestedNextDay(observations)}">Otwórz dzień</button>
         </div>

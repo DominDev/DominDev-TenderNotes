@@ -41,7 +41,7 @@ export function renderObservationFormHtml(dayNumber, observation) {
           <input class="field__input" type="date" name="observation_date" value="${escapeHtml(row.observation_date || todayIso())}">
         </label>
 
-        <div class="scale-help">
+        <div class="scale-help" aria-label="Legenda skali">
           ${SCALE.map((item) => `<div class="scale-help__item"><strong>${item.label}</strong> ${escapeHtml(item.title)}<br>${escapeHtml(item.description)}</div>`).join("")}
         </div>
 
@@ -64,7 +64,10 @@ export function renderObservationFormHtml(dayNumber, observation) {
                         data-field="${field.key}"
                         data-value="${item.value}"
                         aria-pressed="${value === item.value ? "true" : "false"}"
-                      >${item.label}</button>
+                      >
+                        <span class="score-options__icon" aria-hidden="true">${item.icon}</span>
+                        <span class="score-options__label">${escapeHtml(item.label)}</span>
+                      </button>
                     `,
                   ).join("")}
                 </div>
@@ -79,7 +82,7 @@ export function renderObservationFormHtml(dayNumber, observation) {
           <textarea class="field__textarea" name="notes" placeholder="Np. płacz 10 minut przy rozstaniu, po odbiorze pokazała zabawkę...">${escapeHtml(row.notes)}</textarea>
         </label>
 
-        <button class="button" type="submit">Zapisz dzień</button>
+        <button class="button" type="submit">Zapisz obserwację</button>
         <p class="notice" id="formNotice" hidden></p>
       </form>
     </section>
@@ -166,4 +169,3 @@ export function suggestedNextDay(observations) {
 export function parseDayFromSelect(root) {
   return clampDay(root.querySelector("#daySelect")?.value);
 }
-
