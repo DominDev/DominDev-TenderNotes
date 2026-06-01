@@ -414,6 +414,43 @@ button {
   border-radius: var(--radius);
 }
 
+.report-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 28px;
+  background:
+    linear-gradient(135deg, rgba(47, 116, 111, 0.13), rgba(255, 253, 249, 0.94) 46%),
+    var(--color-surface);
+  border-color: rgba(31, 91, 87, 0.35);
+  box-shadow: 0 22px 56px rgba(42, 32, 24, 0.13);
+}
+
+.report-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: var(--color-accent);
+}
+
+.report-hero .section-label {
+  color: var(--color-accent-strong);
+  font-size: 0.82rem;
+}
+
+.report-hero .hero__title {
+  margin-top: 4px;
+  color: var(--color-ink);
+  font-size: clamp(3.1rem, 14vw, 5.4rem);
+  letter-spacing: 0;
+}
+
+.report-hero .hero__text {
+  max-width: 48rem;
+  color: #5f554d;
+  font-size: 1.03rem;
+}
+
 .hero__title {
   margin: 0;
   font-size: clamp(1.85rem, 10vw, 3.4rem);

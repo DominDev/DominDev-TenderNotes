@@ -149,7 +149,7 @@ export function renderReportHtml(observations) {
 
   return `
     <section class="dashboard">
-      <div class="hero">
+      <div class="hero report-hero">
         <p class="section-label">Raport</p>
         <h2 class="hero__title">${round(report.average)}</h2>
         <p class="hero__text">Im bliżej 2, tym więcej spokojnych obserwacji. Patrz przede wszystkim na kierunek i powtarzalność.</p>
