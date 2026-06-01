@@ -5,3 +5,5 @@ Thumbs.db
 .env.*
 *.log
 
+# Local Obsidian AI memory junction
+.obsidian-memory/
