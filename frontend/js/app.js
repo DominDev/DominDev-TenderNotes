@@ -1,12 +1,12 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js";
-import { loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer } from "./api.js";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js";
-import { completionCount, escapeHtml, makeId, parseNotes, round, serializeNotes } from "./utils.js";
-import { getRoute, navigate } from "./router.js";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260601-5";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260601-5";
+import { loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer } from "./api.js?v=20260601-5";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260601-5";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260601-5";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260601-5";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260601-5";
+import { completionCount, escapeHtml, makeId, parseNotes, round, serializeNotes } from "./utils.js?v=20260601-5";
+import { getRoute, navigate } from "./router.js?v=20260601-5";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");

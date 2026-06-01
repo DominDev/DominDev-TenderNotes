@@ -144,12 +144,45 @@ function renderWeakestHtml(weakest, className = "") {
   `;
 }
 
+function interpolateColor(from, to, ratio) {
+  return from.map((channel, index) => Math.round(channel + (to[index] - channel) * ratio));
+}
+
+function reportColorTokens(average) {
+  if (average === null || average === undefined || Number.isNaN(average)) {
+    return {
+      accent: "117, 106, 97",
+      background: "250, 247, 242",
+      border: "213, 202, 190",
+    };
+  }
+
+  const clamped = Math.max(0, Math.min(2, average));
+  const hard = [184, 88, 60];
+  const mixed = [196, 147, 66];
+  const calm = [47, 116, 111];
+  const accent = clamped <= 1 ? interpolateColor(hard, mixed, clamped) : interpolateColor(mixed, calm, clamped - 1);
+  const background = interpolateColor([255, 247, 243], [248, 251, 247], clamped / 2);
+  const border = interpolateColor([219, 147, 123], [47, 116, 111], clamped / 2);
+
+  return {
+    accent: accent.join(", "),
+    background: background.join(", "),
+    border: border.join(", "),
+  };
+}
+
+function reportHeroStyle(average) {
+  const tokens = reportColorTokens(average);
+  return `--report-accent: ${tokens.accent}; --report-bg: ${tokens.background}; --report-border: ${tokens.border};`;
+}
+
 export function renderReportHtml(observations) {
   const report = buildReport(observations);
 
   return `
     <section class="dashboard">
-      <div class="hero report-hero">
+      <div class="hero report-hero" style="${reportHeroStyle(report.average)}">
         <p class="section-label">Raport</p>
         <h2 class="hero__title">${round(report.average)}</h2>
         <p class="hero__text">Im bliżej 2, tym więcej spokojnych obserwacji. Patrz przede wszystkim na kierunek i powtarzalność.</p>

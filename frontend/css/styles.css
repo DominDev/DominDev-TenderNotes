@@ -418,8 +418,8 @@ button {
   position: relative;
   overflow: hidden;
   padding: 26px 28px;
-  background: #f8fbf7;
-  border: 2px solid rgba(47, 116, 111, 0.42);
+  background: rgb(var(--report-bg, 248, 251, 247));
+  border: 2px solid rgba(var(--report-border, 47, 116, 111), 0.58);
   box-shadow: 0 18px 44px rgba(42, 32, 24, 0.11);
 }
 
@@ -429,11 +429,11 @@ button {
   inset: 0 0 auto;
   height: 6px;
   width: auto;
-  background: var(--color-accent);
+  background: rgb(var(--report-accent, 47, 116, 111));
 }
 
 .report-hero .section-label {
-  color: var(--color-accent-strong);
+  color: rgb(var(--report-accent, 47, 116, 111));
   font-size: 0.82rem;
 }
 
