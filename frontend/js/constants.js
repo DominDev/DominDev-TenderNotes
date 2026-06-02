@@ -1,5 +1,6 @@
 export const APP_NAME = "TenderNotes";
 export const TOTAL_DAYS = 14;
+export const SCORE_MAX = 2;
 
 export const SCALE = [
   {

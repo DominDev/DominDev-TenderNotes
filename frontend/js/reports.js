@@ -1,6 +1,6 @@
 import { OBSERVATION_FIELDS, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
 import { AREA_COLORS } from "./charts.js";
-import { completionCount, escapeHtml, formatDate, parseNotes, round } from "./utils.js";
+import { completionCount, escapeHtml, formatDate, formatSerenityIndex, parseNotes, toSerenityIndex } from "./utils.js";
 
 export function buildReport(observations) {
   const completedDays = observations.filter((observation) => completionCount(observation) > 0);
@@ -36,6 +36,7 @@ export function buildReport(observations) {
     completedDays: completedDays.length,
     totalDays: TOTAL_DAYS,
     average,
+    serenityIndex: toSerenityIndex(average),
     scoreCounts,
     weakest,
     areaAverages: OBSERVATION_FIELDS.map((field) => ({
@@ -65,6 +66,10 @@ function buildInsights(completedDays, average, scoreCounts, weakest) {
 
   if (average !== null && average >= 1.5) {
     insights.push("Większość odpowiedzi układa się w spokojny obraz dnia.");
+  }
+
+  if (average !== null && average >= 1 && average < 1.5) {
+    insights.push("Wynik w środku skali oznacza mieszany, nadal wartościowy obraz. Najwięcej mówi kierunek zmian i powtarzalność.");
   }
 
   if (zeroCount >= 6) {
@@ -134,7 +139,7 @@ function renderWeakestHtml(weakest, className = "") {
             (item) => `
               <li class="insights__item">
                 <strong>${escapeHtml(item.label)}</strong><br>
-                Dni z trudnością: ${item.zeros}, średnia: ${round(item.average)}
+                Dni z trudnością: ${item.zeros}, wskaźnik: ${formatSerenityIndex(item.average)}
               </li>
             `,
           )
@@ -177,15 +182,31 @@ function reportHeroStyle(average) {
   return `--report-accent: ${tokens.accent}; --report-bg: ${tokens.background}; --report-border: ${tokens.border};`;
 }
 
+function reportHeroText(serenityIndex) {
+  if (serenityIndex === null) {
+    return "Wypełnij kilka pól, żeby zobaczyć pierwszy obraz dnia. To ma być spokojna obserwacja, nie ocena.";
+  }
+
+  if (serenityIndex < 35) {
+    return "To niższy wynik, ale nadal punkt orientacyjny. Sprawdź trend, notatki i powtarzające się sytuacje.";
+  }
+
+  if (serenityIndex < 65) {
+    return "To mieszany, całkiem użyteczny obraz. Nie musi oznaczać problemu; najważniejsze są trend i powtarzalność.";
+  }
+
+  return "Wysoki wskaźnik oznacza przewagę spokojnych obserwacji. Patrz dalej na rytm kilku dni, nie pojedynczy moment.";
+}
+
 export function renderReportHtml(observations) {
   const report = buildReport(observations);
 
   return `
     <section class="dashboard">
       <div class="hero report-hero" style="${reportHeroStyle(report.average)}">
-        <p class="section-label">Raport</p>
-        <h2 class="hero__title">${round(report.average)}</h2>
-        <p class="hero__text">Im bliżej 2, tym więcej spokojnych obserwacji. Patrz przede wszystkim na kierunek i powtarzalność.</p>
+        <p class="section-label">Wskaźnik spokoju</p>
+        <h2 class="hero__title">${formatSerenityIndex(report.average)}</h2>
+        <p class="hero__text">${reportHeroText(report.serenityIndex)}</p>
       </div>
 
       <div class="metrics">
@@ -209,21 +230,21 @@ export function renderReportHtml(observations) {
 
       <section class="chart-grid">
         <article class="chart-panel chart-panel--wide">
-          <h3 class="chart-panel__title">Trend średniej dziennej</h3>
+          <h3 class="chart-panel__title">Trend wskaźnika dziennego</h3>
           <canvas class="chart" id="trendChart"></canvas>
         </article>
         <article class="chart-panel chart-panel--area">
-          <h3 class="chart-panel__title">Średnia per obszar</h3>
+          <h3 class="chart-panel__title">Wskaźnik spokoju per obszar</h3>
           <div class="chart-panel__body chart-panel__body--area">
             <canvas class="chart" id="areaChart"></canvas>
-            <div class="chart-legend" aria-label="Podpisy wykresu średnich per obszar">
+            <div class="chart-legend" aria-label="Podpisy wykresu wskaźnika per obszar">
               ${report.areaAverages
                 .map(
                   (item, index) => `
                     <div class="chart-legend__item">
                       <span class="chart-legend__swatch" style="background: ${AREA_COLORS[index % AREA_COLORS.length]}"></span>
                       <span class="chart-legend__label">${escapeHtml(item.label)}</span>
-                      <strong class="chart-legend__value">${round(item.average)}</strong>
+                      <strong class="chart-legend__value">${formatSerenityIndex(item.average)}</strong>
                     </div>
                   `,
                 )

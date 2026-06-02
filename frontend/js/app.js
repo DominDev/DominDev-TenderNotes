@@ -1,12 +1,12 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260601-5";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260601-5";
-import { loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer } from "./api.js?v=20260601-5";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260601-5";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260601-5";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260601-5";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260601-5";
-import { completionCount, escapeHtml, makeId, parseNotes, round, serializeNotes } from "./utils.js?v=20260601-5";
-import { getRoute, navigate } from "./router.js?v=20260601-5";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260602-1";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260602-1";
+import { loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer } from "./api.js?v=20260602-1";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260602-1";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260602-1";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260602-1";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260602-1";
+import { completionCount, escapeHtml, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260602-1";
+import { getRoute, navigate } from "./router.js?v=20260602-1";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -226,8 +226,8 @@ function renderDashboard() {
           <p class="metric__value">${fullDays}</p>
         </article>
         <article class="metric">
-          <p class="metric__label">Średnia</p>
-          <p class="metric__value">${round(average)}/2</p>
+          <p class="metric__label">Wskaźnik spokoju</p>
+          <p class="metric__value">${formatSerenityIndex(average)}</p>
         </article>
         <article class="metric">
           <p class="metric__label">Zaznaczone pola</p>

@@ -1,5 +1,5 @@
 import { EMPTY_OBSERVATION, OBSERVATION_FIELDS, SCALE, TOTAL_DAYS } from "./constants.js";
-import { clampDay, completionCount, dayAverage, escapeHtml, formatDate, parseNotes, round, todayIso } from "./utils.js";
+import { clampDay, completionCount, dayAverage, escapeHtml, formatDate, formatSerenityIndex, parseNotes, todayIso } from "./utils.js";
 
 export function mergeObservation(observation) {
   return {
@@ -194,7 +194,7 @@ export function renderHistoryHtml(observations) {
               <span class="day-card__header">
                 <span>
                   <strong class="day-card__title">Dzień ${day}</strong>
-                  <span class="day-card__meta">${formatDate(observation?.observation_date)} · ${completed}/${OBSERVATION_FIELDS.length} pól · średnia ${round(average)}</span>
+                  <span class="day-card__meta">${formatDate(observation?.observation_date)} · ${completed}/${OBSERVATION_FIELDS.length} pól · wskaźnik ${formatSerenityIndex(average)}</span>
                 </span>
                 <span class="pill ${completed === OBSERVATION_FIELDS.length ? "pill--good" : completed ? "pill--warn" : ""}">
                   ${completed === OBSERVATION_FIELDS.length ? "Pełny" : completed ? "Część" : "Pusty"}

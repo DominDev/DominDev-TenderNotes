@@ -1,4 +1,4 @@
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js";
+import { OBSERVATION_FIELDS, SCORE_MAX, TOTAL_DAYS } from "./constants.js";
 
 export function qs(selector, root = document) {
   return root.querySelector(selector);
@@ -67,6 +67,20 @@ export function dayAverage(observation) {
     return null;
   }
   return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+export function toSerenityIndex(value) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null;
+  }
+
+  const clamped = Math.max(0, Math.min(SCORE_MAX, value));
+  return Math.round((clamped / SCORE_MAX) * 100);
+}
+
+export function formatSerenityIndex(value) {
+  const index = toSerenityIndex(value);
+  return index === null ? "–" : String(index);
 }
 
 export function round(value, precision = 1) {

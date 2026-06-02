@@ -1,5 +1,5 @@
-import { OBSERVATION_FIELDS } from "./constants.js";
-import { dayAverage, round } from "./utils.js";
+import { OBSERVATION_FIELDS, SCORE_MAX } from "./constants.js";
+import { dayAverage, formatSerenityIndex } from "./utils.js";
 
 export const AREA_COLORS = [
   "#2f746f",
@@ -82,7 +82,7 @@ export function drawTrend(canvas, observations) {
       return;
     }
     const x = padding.left + (plotWidth / 13) * index;
-    const y = padding.top + plotHeight - (plotHeight / 2) * point.value;
+    const y = padding.top + plotHeight - (plotHeight / SCORE_MAX) * point.value;
     if (!started) {
       ctx.moveTo(x, y);
       started = true;
@@ -95,7 +95,7 @@ export function drawTrend(canvas, observations) {
   points.forEach((point, index) => {
     const x = padding.left + (plotWidth / 13) * index;
     if (point.value !== null) {
-      const y = padding.top + plotHeight - (plotHeight / 2) * point.value;
+      const y = padding.top + plotHeight - (plotHeight / SCORE_MAX) * point.value;
       ctx.fillStyle = "#2f746f";
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -136,7 +136,7 @@ export function drawAreaAverages(canvas, observations) {
 
   values.forEach((item, index) => {
     const x = padding.left + index * (barWidth + barGap);
-    const barHeight = item.average === null ? 0 : (plotHeight / 2) * item.average;
+    const barHeight = item.average === null ? 0 : (plotHeight / SCORE_MAX) * item.average;
     const y = height - padding.bottom - barHeight;
     ctx.fillStyle = AREA_COLORS[index % AREA_COLORS.length];
     ctx.fillRect(x, y, barWidth, barHeight);
@@ -144,7 +144,7 @@ export function drawAreaAverages(canvas, observations) {
     if (item.average !== null) {
       ctx.fillStyle = "#24201d";
       ctx.font = "11px system-ui";
-      ctx.fillText(round(item.average), x, y - 5);
+      ctx.fillText(formatSerenityIndex(item.average), x, y - 5);
     }
   });
 }
