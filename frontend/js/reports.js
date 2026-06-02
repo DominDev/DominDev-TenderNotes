@@ -69,7 +69,7 @@ function buildInsights(completedDays, average, scoreCounts, weakest) {
   }
 
   if (average !== null && average >= 1 && average < 1.5) {
-    insights.push("Wynik w środku skali oznacza mieszany, nadal wartościowy obraz. Najwięcej mówi kierunek zmian i powtarzalność.");
+    insights.push("Wynik w środku skali nie jest sam w sobie alarmem. Oznacza, że obok spokojnych chwil pojawiają się trudniejsze momenty. Warto patrzeć, czy wracają w tych samych sytuacjach.");
   }
 
   if (zeroCount >= 6) {
@@ -192,7 +192,7 @@ function reportHeroText(serenityIndex) {
   }
 
   if (serenityIndex < 65) {
-    return "To mieszany, całkiem użyteczny obraz. Nie musi oznaczać problemu; najważniejsze są trend i powtarzalność.";
+    return "Wynik około środka skali zwykle nie jest powodem do niepokoju. Są spokojniejsze chwile i trudniejsze momenty. Dzieci miewają gorsze dni; patrz, czy trudności wracają.";
   }
 
   return "Wysoki wskaźnik oznacza przewagę spokojnych obserwacji. Patrz dalej na rytm kilku dni, nie pojedynczy moment.";
