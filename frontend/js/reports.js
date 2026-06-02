@@ -1,4 +1,4 @@
-import { OBSERVATION_FIELDS, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
+import { OBSERVATION_FIELDS, SCALE, SCORE_MAX, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
 import { AREA_COLORS } from "./charts.js";
 import { completionCount, escapeHtml, formatDate, formatSerenityIndex, formatSerenityIndexScore, parseNotes, toSerenityIndex } from "./utils.js";
 
@@ -22,7 +22,10 @@ export function buildReport(observations) {
   });
 
   const average = allScores.length ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length : null;
-  const scoreCounts = [0, 1, 2].map((score) => allScores.filter((value) => value === score).length);
+  const scoreCounts = SCALE.map((item) => ({
+    ...item,
+    count: allScores.filter((value) => value === item.value).length,
+  }));
   const weakest = OBSERVATION_FIELDS
     .map((field) => ({
       label: field.label,
@@ -58,21 +61,22 @@ function fieldAverage(observations, key) {
 
 function buildInsights(completedDays, average, scoreCounts, weakest) {
   const insights = [];
-  const zeroCount = scoreCounts[0] ?? 0;
+  const serenityIndex = toSerenityIndex(average);
+  const hardCount = scoreCounts.find((item) => item.value === 0)?.count ?? 0;
 
   if (!completedDays.length) {
     return ["Wypełnij pierwsze dni, aby zobaczyć wzorce i trendy."];
   }
 
-  if (average !== null && average >= 1.5) {
+  if (serenityIndex !== null && serenityIndex >= 65) {
     insights.push("W większości wpisów pojawiają się spokojne momenty. To dobry znak, zwłaszcza jeśli podobny rytm powtarza się przez kilka dni.");
   }
 
-  if (average !== null && average >= 1 && average < 1.5) {
+  if (serenityIndex !== null && serenityIndex >= 35 && serenityIndex < 65) {
     insights.push("Taki wynik zwykle nie oznacza od razu powodu do niepokoju. Widać spokojniejsze chwile i trudniejsze momenty, co u małych dzieci jest dość naturalne. Najważniejsze, czy te trudniejsze sytuacje często się powtarzają.");
   }
 
-  if (zeroCount >= 6) {
+  if (hardCount >= 6) {
     insights.push("Kilka razy zaznaczono „Trudno”. To nie musi oznaczać czegoś złego, ale warto spokojnie sprawdzić, czy dotyczy podobnych sytuacji albo konkretnych pór dnia.");
   }
 
@@ -162,13 +166,14 @@ function reportColorTokens(average) {
     };
   }
 
-  const clamped = Math.max(0, Math.min(2, average));
+  const clamped = Math.max(0, Math.min(SCORE_MAX, average));
+  const ratio = clamped / SCORE_MAX;
   const hard = [184, 88, 60];
   const mixed = [196, 147, 66];
   const calm = [47, 116, 111];
-  const accent = clamped <= 1 ? interpolateColor(hard, mixed, clamped) : interpolateColor(mixed, calm, clamped - 1);
-  const background = interpolateColor([255, 247, 243], [248, 251, 247], clamped / 2);
-  const border = interpolateColor([219, 147, 123], [47, 116, 111], clamped / 2);
+  const accent = ratio <= 0.5 ? interpolateColor(hard, mixed, ratio * 2) : interpolateColor(mixed, calm, (ratio - 0.5) * 2);
+  const background = interpolateColor([255, 247, 243], [248, 251, 247], ratio);
+  const border = interpolateColor([219, 147, 123], [47, 116, 111], ratio);
 
   return {
     accent: accent.join(", "),
@@ -214,18 +219,16 @@ export function renderReportHtml(observations) {
           <p class="metric__label">Dni</p>
           <p class="metric__value">${report.completedDays}/${report.totalDays}</p>
         </article>
-        <article class="metric">
-          <p class="metric__label">Trudno</p>
-          <p class="metric__value">${report.scoreCounts[0]}</p>
-        </article>
-        <article class="metric">
-          <p class="metric__label">Różnie</p>
-          <p class="metric__value">${report.scoreCounts[1]}</p>
-        </article>
-        <article class="metric">
-          <p class="metric__label">Spokojnie</p>
-          <p class="metric__value">${report.scoreCounts[2]}</p>
-        </article>
+        ${report.scoreCounts
+          .map(
+            (item) => `
+              <article class="metric">
+                <p class="metric__label">${escapeHtml(item.label)}</p>
+                <p class="metric__value">${item.count}</p>
+              </article>
+            `,
+          )
+          .join("")}
       </div>
 
       <section class="chart-grid">

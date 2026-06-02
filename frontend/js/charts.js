@@ -1,4 +1,4 @@
-import { OBSERVATION_FIELDS, SCORE_MAX } from "./constants.js";
+import { OBSERVATION_FIELDS, SCALE, SCORE_MAX } from "./constants.js";
 import { dayAverage, formatSerenityIndex } from "./utils.js";
 
 export const AREA_COLORS = [
@@ -155,28 +155,31 @@ export function drawScoreDistribution(canvas, observations) {
   clear(ctx, width, height);
   drawAxes(ctx, width, height, padding);
 
-  const labels = ["Trudno", "Różnie", "Spokojnie"];
-  const counts = [0, 1, 2].map((score) => ({
-    score,
+  const counts = SCALE.map((scaleItem) => ({
+    ...scaleItem,
     count: observations.reduce((total, observation) => {
-      return total + OBSERVATION_FIELDS.filter((field) => observation[field.key] === score).length;
+      return total + OBSERVATION_FIELDS.filter((field) => observation[field.key] === scaleItem.value).length;
     }, 0),
   }));
   const max = Math.max(1, ...counts.map((item) => item.count));
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
-  const barWidth = plotWidth / counts.length - 18;
+  const barWidth = Math.max(16, plotWidth / counts.length - 14);
 
   counts.forEach((item, index) => {
-    const x = padding.left + index * (plotWidth / counts.length) + 9;
+    const slotWidth = plotWidth / counts.length;
+    const x = padding.left + index * slotWidth + (slotWidth - barWidth) / 2;
     const barHeight = (plotHeight / max) * item.count;
     const y = height - padding.bottom - barHeight;
-    ctx.fillStyle = item.score === 0 ? "#b8583c" : item.score === 1 ? "#c49342" : "#3c7a4a";
+    ctx.fillStyle = item.chartColor;
     ctx.fillRect(x, y, barWidth, barHeight);
     ctx.fillStyle = "#24201d";
     ctx.font = "13px system-ui";
     ctx.fillText(String(item.count), x + barWidth / 2 - 4, y - 7);
     ctx.fillStyle = "#756a61";
-    ctx.fillText(labels[item.score], Math.max(4, x + barWidth / 2 - 24), height - 8);
+    ctx.font = "11px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(item.shortLabel, x + barWidth / 2, height - 8);
+    ctx.textAlign = "left";
   });
 }

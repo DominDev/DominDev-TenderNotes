@@ -1,30 +1,46 @@
 export const APP_NAME = "TenderNotes";
 export const TOTAL_DAYS = 14;
-export const SCORE_MAX = 2;
+export const SCORE_MAX = 3;
 
 export const SCALE = [
   {
     value: 0,
     label: "Trudno",
+    shortLabel: "Trudno",
     icon: "☁",
     iconClass: "state-icon--hard",
-    title: "Potrzebuje wsparcia",
+    chartColor: "#b8583c",
+    title: "Potrzebuje dużo wsparcia",
     description: "Duży płacz, wycofanie, brak kontaktu albo wyraźna zmiana.",
   },
   {
     value: 1,
-    label: "Różnie",
-    icon: "◐",
-    iconClass: "state-icon--mixed",
-    title: "Różnie w ciągu dnia",
-    description: "Trochę niepewności lub zmęczenia, ale kontakt i ukojenie są możliwe.",
+    label: "Trochę trudno",
+    shortLabel: "Trochę",
+    icon: "◒",
+    iconClass: "state-icon--uneasy",
+    chartColor: "#c49342",
+    title: "Było napięcie, ale kontakt był możliwy",
+    description: "Płacz, zmęczenie lub niepewność pojawiały się wyraźnie, ale dziecko dawało się ukoić.",
   },
   {
     value: 2,
+    label: "Raczej spokojnie",
+    shortLabel: "Raczej",
+    icon: "◐",
+    iconClass: "state-icon--settling",
+    chartColor: "#4976a8",
+    title: "Dzień wracał do równowagi",
+    description: "Były drobne trudności, ale kontakt, zabawa lub ukojenie szybko wracały.",
+  },
+  {
+    value: 3,
     label: "Spokojnie",
+    shortLabel: "Spokojnie",
     icon: "✓",
     iconClass: "state-icon--calm",
-    title: "Dzień wygląda dobrze",
+    chartColor: "#3c7a4a",
+    title: "Dzień wygląda spokojnie",
     description: "Kontakt, zabawa, ukojenie i powrót do równowagi wyglądają typowo.",
   },
 ];
