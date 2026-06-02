@@ -83,6 +83,11 @@ export function formatSerenityIndex(value) {
   return index === null ? "–" : String(index);
 }
 
+export function formatSerenityIndexScore(value) {
+  const index = toSerenityIndex(value);
+  return index === null ? "–" : `${index}/100`;
+}
+
 export function round(value, precision = 1) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "–";

@@ -1,6 +1,6 @@
 import { OBSERVATION_FIELDS, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
 import { AREA_COLORS } from "./charts.js";
-import { completionCount, escapeHtml, formatDate, formatSerenityIndex, parseNotes, toSerenityIndex } from "./utils.js";
+import { completionCount, escapeHtml, formatDate, formatSerenityIndex, formatSerenityIndexScore, parseNotes, toSerenityIndex } from "./utils.js";
 
 export function buildReport(observations) {
   const completedDays = observations.filter((observation) => completionCount(observation) > 0);
@@ -65,28 +65,28 @@ function buildInsights(completedDays, average, scoreCounts, weakest) {
   }
 
   if (average !== null && average >= 1.5) {
-    insights.push("Większość odpowiedzi układa się w spokojny obraz dnia.");
+    insights.push("W większości wpisów pojawiają się spokojne momenty. To dobry znak, zwłaszcza jeśli podobny rytm powtarza się przez kilka dni.");
   }
 
   if (average !== null && average >= 1 && average < 1.5) {
-    insights.push("Wynik w środku skali nie jest sam w sobie alarmem. Oznacza, że obok spokojnych chwil pojawiają się trudniejsze momenty. Warto patrzeć, czy wracają w tych samych sytuacjach.");
+    insights.push("Taki wynik zwykle nie oznacza od razu powodu do niepokoju. Widać spokojniejsze chwile i trudniejsze momenty, co u małych dzieci jest dość naturalne. Najważniejsze, czy te trudniejsze sytuacje często się powtarzają.");
   }
 
   if (zeroCount >= 6) {
-    insights.push("Stan „Trudno” pojawia się kilka razy. Warto sprawdzić, czy dotyczy tych samych sytuacji i dni.");
+    insights.push("Kilka razy zaznaczono „Trudno”. To nie musi oznaczać czegoś złego, ale warto spokojnie sprawdzić, czy dotyczy podobnych sytuacji albo konkretnych pór dnia.");
   }
 
   const repeatedWeakness = weakest.find((item) => item.zeros >= 3);
   if (repeatedWeakness) {
-    insights.push(`Najczęściej powtarzająca się trudność: ${repeatedWeakness.label}.`);
+    insights.push(`Najczęściej trudniej bywa w obszarze: ${repeatedWeakness.label}. Warto zobaczyć, czy to pojedyncze dni, czy powtarzający się schemat.`);
   }
 
   if (completedDays.length < 14) {
-    insights.push(`Raport jest częściowy: uzupełniono ${completedDays.length} z 14 dni.`);
+    insights.push(`Raport dopiero się tworzy: uzupełniono ${completedDays.length} z 14 dni. Pierwsze wpisy są pomocne, ale więcej powiedzą kolejne dni.`);
   }
 
   if (!insights.length) {
-    insights.push("Dane są mieszane. Najwięcej powiedzą kolejne dni i konkretne notatki.");
+    insights.push("Na razie widać różne sygnały. To normalne przy krótkiej obserwacji; kolejne dni i notatki pomogą zobaczyć, czy pojawia się stały rytm.");
   }
 
   return insights;
@@ -188,14 +188,14 @@ function reportHeroText(serenityIndex) {
   }
 
   if (serenityIndex < 35) {
-    return "To niższy wynik, ale nadal punkt orientacyjny. Sprawdź trend, notatki i powtarzające się sytuacje.";
+    return "W ostatnich wpisach częściej pojawiały się trudniejsze momenty. To nie znaczy od razu, że dzieje się coś złego. Spokojnie sprawdź notatki i powtarzające się sytuacje.";
   }
 
   if (serenityIndex < 65) {
     return "Wynik około środka skali zwykle nie jest powodem do niepokoju. Są spokojniejsze chwile i trudniejsze momenty. Dzieci miewają gorsze dni; patrz, czy trudności wracają.";
   }
 
-  return "Wysoki wskaźnik oznacza przewagę spokojnych obserwacji. Patrz dalej na rytm kilku dni, nie pojedynczy moment.";
+  return "W ostatnich wpisach przeważają spokojne momenty. To raczej uspokajający sygnał. Warto dalej zapisywać kolejne dni, żeby zobaczyć, czy ten rytm się utrzymuje.";
 }
 
 export function renderReportHtml(observations) {
@@ -205,7 +205,7 @@ export function renderReportHtml(observations) {
     <section class="dashboard">
       <div class="hero report-hero" style="${reportHeroStyle(report.average)}">
         <p class="section-label">Wskaźnik spokoju</p>
-        <h2 class="hero__title">${formatSerenityIndex(report.average)}</h2>
+        <h2 class="hero__title">${formatSerenityIndexScore(report.average)}</h2>
         <p class="hero__text">${reportHeroText(report.serenityIndex)}</p>
       </div>
 
