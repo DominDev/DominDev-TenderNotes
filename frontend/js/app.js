@@ -1,12 +1,12 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260602-4";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260602-4";
-import { loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer } from "./api.js?v=20260602-4";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260602-4";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260602-4";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260602-4";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260602-4";
-import { completionCount, escapeHtml, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260602-4";
-import { getRoute, navigate } from "./router.js?v=20260602-4";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260602-5";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260602-5";
+import { loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer } from "./api.js?v=20260602-5";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260602-5";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260602-5";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260602-5";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260602-5";
+import { completionCount, escapeHtml, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260602-5";
+import { getRoute, navigate } from "./router.js?v=20260602-5";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -17,6 +17,7 @@ const logoutButton = document.querySelector("#logoutButton");
 let currentUser = null;
 let observations = [];
 let authMode = "signin";
+let printRedrawTimer = null;
 
 const titles = {
   dashboard: "Dziennik",
@@ -27,6 +28,8 @@ const titles = {
 };
 
 async function boot() {
+  wirePrintRedraw();
+
   if (!isSupabaseConfigured()) {
     renderConfigMissing();
     return;
@@ -413,6 +416,24 @@ function drawReportCharts() {
   drawScoreDistribution(distributionChart, observations);
 }
 
+function redrawReportChartsForPrint() {
+  if (getRoute().name !== "report") {
+    return;
+  }
+
+  window.clearTimeout(printRedrawTimer);
+  drawReportCharts();
+  printRedrawTimer = window.setTimeout(drawReportCharts, 80);
+}
+
+function wirePrintRedraw() {
+  window.addEventListener("beforeprint", redrawReportChartsForPrint);
+  window.addEventListener("afterprint", () => {
+    window.clearTimeout(printRedrawTimer);
+    requestAnimationFrame(drawReportCharts);
+  });
+}
+
 async function renderSummary() {
   const answers = await loadSummaryAnswers();
   app.innerHTML = renderSummaryHtml(answers);
@@ -478,7 +499,5 @@ logoutButton.addEventListener("click", async () => {
 });
 
 window.addEventListener("hashchange", renderRoute);
-window.addEventListener("beforeprint", drawReportCharts);
-window.addEventListener("afterprint", drawReportCharts);
 
 boot();

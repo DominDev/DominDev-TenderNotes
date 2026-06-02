@@ -39,9 +39,13 @@ function drawAxes(ctx, width, height, padding) {
   ctx.stroke();
 }
 
+function yForScore(value, padding, plotHeight) {
+  return padding.top + plotHeight - (plotHeight / SCORE_MAX) * value;
+}
+
 export function drawTrend(canvas, observations) {
   const { ctx, width, height } = setupCanvas(canvas);
-  const padding = { top: 18, right: 14, bottom: 28, left: 34 };
+  const padding = { top: 20, right: 14, bottom: 28, left: 38 };
   clear(ctx, width, height);
   drawAxes(ctx, width, height, padding);
 
@@ -57,20 +61,36 @@ export function drawTrend(canvas, observations) {
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
 
-  const middleY = padding.top + plotHeight / 2;
-  ctx.strokeStyle = "#d9c4ae";
-  ctx.setLineDash([4, 5]);
-  ctx.beginPath();
-  ctx.moveTo(padding.left, middleY);
-  ctx.lineTo(width - padding.right, middleY);
-  ctx.stroke();
+  ctx.strokeStyle = "#f0e4d7";
+  ctx.lineWidth = 1;
+  Array.from({ length: 14 }, (_, index) => index).forEach((index) => {
+    if (index % 2 !== 0) {
+      return;
+    }
+    const x = padding.left + (plotWidth / 13) * index;
+    ctx.beginPath();
+    ctx.moveTo(x, padding.top);
+    ctx.lineTo(x, height - padding.bottom);
+    ctx.stroke();
+  });
+
+  ctx.strokeStyle = "#e3d4c5";
+  SCALE.forEach((item) => {
+    const y = yForScore(item.value, padding, plotHeight);
+    ctx.setLineDash(item.value === 0 || item.value === SCORE_MAX ? [] : [4, 5]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+  });
   ctx.setLineDash([]);
 
   ctx.fillStyle = "#756a61";
   ctx.font = "12px system-ui";
-  ctx.fillText("✓", 10, padding.top + 4);
-  ctx.fillText("◐", 8, middleY + 4);
-  ctx.fillText("☁", 8, height - padding.bottom + 4);
+  SCALE.forEach((item) => {
+    const y = yForScore(item.value, padding, plotHeight);
+    ctx.fillText(item.icon, 10, y + 4);
+  });
 
   ctx.strokeStyle = "#2f746f";
   ctx.lineWidth = 3;
@@ -82,7 +102,7 @@ export function drawTrend(canvas, observations) {
       return;
     }
     const x = padding.left + (plotWidth / 13) * index;
-    const y = padding.top + plotHeight - (plotHeight / SCORE_MAX) * point.value;
+    const y = yForScore(point.value, padding, plotHeight);
     if (!started) {
       ctx.moveTo(x, y);
       started = true;
@@ -95,7 +115,7 @@ export function drawTrend(canvas, observations) {
   points.forEach((point, index) => {
     const x = padding.left + (plotWidth / 13) * index;
     if (point.value !== null) {
-      const y = padding.top + plotHeight - (plotHeight / SCORE_MAX) * point.value;
+      const y = yForScore(point.value, padding, plotHeight);
       ctx.fillStyle = "#2f746f";
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
