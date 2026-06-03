@@ -25,7 +25,7 @@ let observations = [];
 let authMode = "signin";
 let printRedrawTimer = null;
 
-const AVATAR_COLORS = ["#2f746f", "#4976a8", "#c06f3d", "#7b5ea7", "#4f8a59", "#b8583c"];
+const AVATAR_COLORS = ["#f08ab4", "#f6a06f", "#f0c85a", "#7cc7a8", "#76b7dc", "#a98bd8", "#2f746f", "#b8583c"];
 const AGE_BANDS = [
   { value: "0-2", label: "0-2 lata" },
   { value: "3-5", label: "3-5 lat" },
@@ -486,6 +486,54 @@ function toBirthMonth(value) {
   return value ? `${value}-01` : null;
 }
 
+function ageBandForBirthMonth(monthValue) {
+  if (!monthValue) {
+    return "";
+  }
+
+  const birth = new Date(`${monthValue.slice(0, 7)}-01T00:00:00`);
+  const now = new Date();
+  const months = Math.max(0, (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth());
+
+  if (months <= 35) {
+    return "0-2";
+  }
+  if (months <= 71) {
+    return "3-5";
+  }
+  if (months <= 107) {
+    return "6-8";
+  }
+  if (months <= 155) {
+    return "9-12";
+  }
+  return "13+";
+}
+
+function updateAgeBandControls(form) {
+  const birthMonth = form.querySelector('input[name="birth_month"]')?.value ?? "";
+  const ageBand = form.querySelector('select[name="age_band"]');
+  const hint = form.querySelector("#ageBandHint");
+
+  if (!ageBand) {
+    return;
+  }
+
+  if (birthMonth) {
+    ageBand.value = ageBandForBirthMonth(birthMonth) || "0-2";
+    ageBand.disabled = true;
+    if (hint) {
+      hint.textContent = "PrzedziaĹ‚ ustawiony automatycznie z miesiÄ…ca urodzenia.";
+    }
+    return;
+  }
+
+  ageBand.disabled = false;
+  if (hint) {
+    hint.textContent = "Bez daty urodzenia wybierz przedziaĹ‚ rÄ™cznie.";
+  }
+}
+
 function renderAvatarColorOptions(selectedColor = AVATAR_COLORS[0]) {
   return AVATAR_COLORS.map(
     (color) => `
@@ -497,8 +545,34 @@ function renderAvatarColorOptions(selectedColor = AVATAR_COLORS[0]) {
   ).join("");
 }
 
+function selectedAvatarColor(form) {
+  return form.querySelector('input[name="custom_avatar_color"]')?.value || AVATAR_COLORS[0];
+}
+
+function syncAvatarSwatches(form) {
+  const color = selectedAvatarColor(form).toLowerCase();
+  form.querySelectorAll('input[name="avatar_color"]').forEach((input) => {
+    input.checked = input.value.toLowerCase() === color;
+  });
+}
+
+function updateColorPreview(form) {
+  const preview = form.querySelector("#childPhotoPreview");
+  const name = form.querySelector('input[name="display_name"]')?.value || "Dziecko";
+
+  if (!preview) {
+    return;
+  }
+
+  syncAvatarSwatches(form);
+  preview.textContent = childInitials(name);
+  preview.style.background = selectedAvatarColor(form);
+}
+
 function renderChildSheet(editChildId = "") {
-  const editingChild = children.find((child) => child.id === editChildId) ?? null;
+  const isNewChild = editChildId === "new";
+  const editingChild = isNewChild ? null : children.find((child) => child.id === editChildId) ?? null;
+  const showForm = isNewChild || Boolean(editingChild);
   const selectedColor = editingChild?.avatar_color || AVATAR_COLORS[0];
   const sheet = document.createElement("div");
   sheet.className = "child-sheet";
@@ -531,10 +605,29 @@ function renderChildSheet(editChildId = "") {
             `,
           )
           .join("")}
+        <button class="child-card child-card--add" type="button" data-child-add>
+          <span class="child-card__plus" aria-hidden="true">+</span>
+          <span>
+            <strong>Dodaj dziecko</strong>
+            <small>Osobny dziennik i raport</small>
+          </span>
+        </button>
       </div>
 
+      ${
+        showForm
+          ? `
       <form class="child-form panel" id="childForm" data-edit-child-id="${editingChild?.id ?? ""}">
-        <h3 class="panel__title">${editingChild ? "Edytuj dziecko" : "Dodaj dziecko"}</h3>
+        <div class="child-form__top">
+          <div class="child-photo">
+            <span class="child-photo__avatar" id="childPhotoPreview" style="background: ${selectedColor}" aria-hidden="true">${childInitials(editingChild?.display_name ?? "Dziecko")}</span>
+            <button class="child-photo__add" type="button" aria-label="Zdjęcie dziecka będzie dostępne później" title="Zdjęcie dziecka będzie dostępne później">+</button>
+          </div>
+          <div>
+            <h3 class="panel__title">${editingChild ? "Edytuj profil" : "Nowe dziecko"}</h3>
+            <p class="panel__hint">Zdjęcie dodamy później. Na razie avatar używa inicjałów i koloru.</p>
+          </div>
+        </div>
         <label class="field">
           <span class="field__label">Imię lub nazwa</span>
           <input class="field__input" name="display_name" value="${escapeHtml(editingChild?.display_name ?? "")}" required>
@@ -548,26 +641,48 @@ function renderChildSheet(editChildId = "") {
           <select class="field__select" name="age_band">
             ${AGE_BANDS.map((band) => `<option value="${band.value}" ${(editingChild?.age_band ?? "0-2") === band.value ? "selected" : ""}>${band.label}</option>`).join("")}
           </select>
+          <small class="field__hint" id="ageBandHint"></small>
         </label>
         <fieldset class="color-choice-group">
           <legend class="field__label">Kolor avatara</legend>
           <div class="color-choice-group__items">
             ${renderAvatarColorOptions(selectedColor)}
           </div>
+          <label class="color-custom">
+            <span>Własny kolor</span>
+            <input type="color" name="custom_avatar_color" value="${escapeHtml(selectedColor)}">
+          </label>
         </fieldset>
         <div class="child-form__actions">
-          <button class="button" type="submit">${editingChild ? "Zapisz dziecko" : "Dodaj dziecko"}</button>
-          ${editingChild ? `<button class="button button--ghost" type="button" data-child-new>Dodaj nowe</button>` : ""}
-          ${editingChild ? `<button class="button button--ghost button--danger" type="button" data-child-archive="${editingChild.id}">Ukryj dziecko</button>` : ""}
+          <button class="button" type="submit">${editingChild ? "Zapisz" : "Dodaj"}</button>
+          <button class="button button--ghost" type="button" data-child-collapse>Schowaj formularz</button>
+          ${editingChild ? `<button class="button button--ghost button--danger" type="button" data-child-archive="${editingChild.id}">Archiwizuj</button>` : ""}
         </div>
         <p class="notice" id="childNotice" hidden></p>
       </form>
+          `
+          : ""
+      }
     </section>
   `;
 
   document.body.append(sheet);
-  sheet.querySelector("#childForm").addEventListener("submit", handleChildSubmit);
-  sheet.querySelector('input[name="display_name"]')?.focus();
+  const form = sheet.querySelector("#childForm");
+  if (form) {
+    form.addEventListener("submit", handleChildSubmit);
+    form.querySelector('input[name="birth_month"]').addEventListener("change", () => updateAgeBandControls(form));
+    form.querySelector('input[name="custom_avatar_color"]').addEventListener("input", () => updateColorPreview(form));
+    form.querySelectorAll('input[name="avatar_color"]').forEach((input) =>
+      input.addEventListener("change", () => {
+        form.querySelector('input[name="custom_avatar_color"]').value = input.value;
+        updateColorPreview(form);
+      }),
+    );
+    form.querySelector('input[name="display_name"]').addEventListener("input", () => updateColorPreview(form));
+    updateAgeBandControls(form);
+    updateColorPreview(form);
+    form.querySelector('input[name="display_name"]')?.focus();
+  }
 }
 
 function closeChildSheet() {
@@ -585,11 +700,12 @@ async function handleChildSubmit(event) {
   const notice = form.querySelector("#childNotice");
   const formData = new FormData(form);
   const editChildId = form.dataset.editChildId;
+  const birthMonth = formData.get("birth_month")?.toString() ?? "";
   const payload = {
     display_name: formData.get("display_name").toString().trim(),
-    birth_month: toBirthMonth(formData.get("birth_month")?.toString()),
-    age_band: formData.get("age_band")?.toString() || "0-2",
-    avatar_color: formData.get("avatar_color")?.toString() || AVATAR_COLORS[0],
+    birth_month: toBirthMonth(birthMonth),
+    age_band: birthMonth ? ageBandForBirthMonth(birthMonth) : formData.get("age_band")?.toString() || "0-2",
+    avatar_color: selectedAvatarColor(form),
   };
 
   try {
@@ -685,7 +801,7 @@ function translateError(message) {
 
 document.body.addEventListener("click", (event) => {
   if (event.target.closest("[data-child-add]")) {
-    openChildSheet();
+    openChildSheet("new");
     return;
   }
 
@@ -695,6 +811,11 @@ document.body.addEventListener("click", (event) => {
   }
 
   if (event.target.closest("[data-child-new]")) {
+    openChildSheet("new");
+    return;
+  }
+
+  if (event.target.closest("[data-child-collapse]")) {
     openChildSheet();
     return;
   }
@@ -717,7 +838,7 @@ document.body.addEventListener("click", (event) => {
 
   const childArchive = event.target.closest("[data-child-archive]");
   if (childArchive) {
-    if (!window.confirm("UkryÄ‡ to dziecko? Dane zostanÄ… zachowane, ale profil zniknie z listy.")) {
+    if (!window.confirm("ZarchiwizowaÄ‡ ten profil? Dane zostanÄ… zachowane, a profil zniknie z listy.")) {
       return;
     }
 
@@ -769,7 +890,7 @@ logoutButton.addEventListener("click", async () => {
 });
 
 childSwitcherButton.addEventListener("click", () => {
-  openChildSheet(selectedChildId);
+  openChildSheet();
 });
 
 window.addEventListener("hashchange", renderRoute);
