@@ -18,6 +18,16 @@ async function requireUser() {
   return userData.user;
 }
 
+function isMissingAvatarImageColumn(error) {
+  return error?.code === "PGRST204" && error.message?.includes("avatar_image");
+}
+
+function withoutAvatarImage(payload) {
+  const nextPayload = { ...payload };
+  delete nextPayload.avatar_image;
+  return nextPayload;
+}
+
 export async function loadChildren() {
   const client = requireClient();
   const { data, error } = await client
@@ -36,15 +46,26 @@ export async function loadChildren() {
 export async function createChild(payload) {
   const client = requireClient();
   const user = await requireUser();
+  const row = {
+    ...payload,
+    owner_user_id: user.id,
+  };
   const { error } = await client
     .from("children")
-    .insert({
-      ...payload,
-      owner_user_id: user.id,
-    });
+    .insert(row);
 
   if (error) {
-    throw error;
+    if (!isMissingAvatarImageColumn(error)) {
+      throw error;
+    }
+
+    const { error: retryError } = await client
+      .from("children")
+      .insert(withoutAvatarImage(row));
+
+    if (retryError) {
+      throw retryError;
+    }
   }
 
   const { data, error: loadError } = await client
@@ -64,18 +85,27 @@ export async function createChild(payload) {
 
 export async function updateChild(childId, payload) {
   const client = requireClient();
-  const { data, error } = await client
+  let response = await client
     .from("children")
     .update(payload)
     .eq("id", childId)
     .select()
     .single();
 
-  if (error) {
-    throw error;
+  if (isMissingAvatarImageColumn(response.error)) {
+    response = await client
+      .from("children")
+      .update(withoutAvatarImage(payload))
+      .eq("id", childId)
+      .select()
+      .single();
   }
 
-  return data;
+  if (response.error) {
+    throw response.error;
+  }
+
+  return response.data;
 }
 
 export async function archiveChild(childId) {

@@ -203,7 +203,58 @@ function reportHeroText(serenityIndex) {
   return "W ostatnich wpisach przeważają spokojne momenty. To raczej uspokajający sygnał. Warto dalej zapisywać kolejne dni, żeby zobaczyć, czy ten rytm się utrzymuje.";
 }
 
-export function renderReportHtml(observations, child = null) {
+function summaryAnswerLabel(answer) {
+  if (answer === "tak") {
+    return "Tak";
+  }
+  if (answer === "nie") {
+    return "Nie";
+  }
+  if (answer === "nie_wiem") {
+    return "Nie wiem";
+  }
+  return "Nie uzupełniono";
+}
+
+function meaningfulSummaryAnswers(answers) {
+  const answerMap = new Map(answers.map((answer) => [answer.question_key, answer]));
+
+  return SUMMARY_QUESTIONS.map((question) => ({
+    ...question,
+    answer: answerMap.get(question.key) ?? {},
+  })).filter((item) => item.answer.answer || item.answer.evidence || item.answer.next_step);
+}
+
+function renderSummaryAnswerCards(answers, { compact = false } = {}) {
+  const items = meaningfulSummaryAnswers(answers);
+
+  if (!items.length) {
+    return `
+      <p class="empty-state">Nie ma jeszcze zapisanych odpowiedzi. Wypełnij pytania, kiedy będziesz mieć kilka dni obserwacji.</p>
+    `;
+  }
+
+  return `
+    <div class="summary-answer-list ${compact ? "summary-answer-list--compact" : ""}">
+      ${items
+        .map(
+          (item) => `
+            <article class="summary-answer">
+              <div class="summary-answer__header">
+                <h4 class="summary-answer__title">${escapeHtml(item.text)}</h4>
+                <span class="summary-answer__badge">${summaryAnswerLabel(item.answer.answer)}</span>
+              </div>
+              ${item.answer.evidence ? `<p class="summary-answer__text"><strong>Co za tym przemawia:</strong> ${escapeHtml(item.answer.evidence)}</p>` : ""}
+              ${item.answer.next_step ? `<p class="summary-answer__text"><strong>Co dalej:</strong> ${escapeHtml(item.answer.next_step)}</p>` : ""}
+            </article>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+export function renderReportHtml(observations, child = null, summaryAnswers = []) {
   const report = buildReport(observations);
   const childAge = formatChildAge(child);
   const childLabel = child ? `${escapeHtml(child.display_name)}${childAge ? ` · ${escapeHtml(childAge)}` : ""}` : "";
@@ -279,6 +330,7 @@ export function renderReportHtml(observations, child = null) {
       <section class="panel">
         <h3 class="panel__title">Pytania otwarte</h3>
         <p class="panel__hint">Wypełnij je po kilku lub czternastu dniach, kiedy łatwiej zobaczyć rytm i powtarzające się sytuacje.</p>
+        ${renderSummaryAnswerCards(summaryAnswers, { compact: true })}
         <div class="action-row">
           <button class="button button--secondary" type="button" data-route-action="summary">Otwórz pytania</button>
           <button class="button button--ghost" type="button" data-print>Drukuj raport</button>
@@ -288,7 +340,7 @@ export function renderReportHtml(observations, child = null) {
   `;
 }
 
-export function renderSummaryHtml(answers) {
+export function renderSummaryHtml(answers, message = "") {
   const answerMap = new Map(answers.map((answer) => [answer.question_key, answer]));
 
   return `
@@ -298,6 +350,8 @@ export function renderSummaryHtml(answers) {
         <h2 class="hero__title">Dodatkowy kontekst</h2>
         <p class="hero__text">Zapisz odpowiedzi wtedy, kiedy widać już kilka dni obserwacji i łatwiej nazwać powtarzające się sytuacje.</p>
       </div>
+
+      ${message ? `<p class="notice notice--success">${escapeHtml(message)}</p>` : ""}
 
       <form class="question-list" id="summaryForm">
         ${SUMMARY_QUESTIONS.map((question) => {
@@ -327,6 +381,11 @@ export function renderSummaryHtml(answers) {
         }).join("")}
         <button class="button" type="submit">Zapisz podsumowanie</button>
       </form>
+
+      <section class="panel">
+        <h3 class="panel__title">Zapisane odpowiedzi</h3>
+        ${renderSummaryAnswerCards(answers)}
+      </section>
     </section>
   `;
 }

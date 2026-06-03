@@ -1,12 +1,12 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-1";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-1";
-import { archiveChild, createChild, loadChildren, loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer, updateChild } from "./api.js?v=20260603-1";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-1";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-1";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-1";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-1";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-1";
-import { getRoute, navigate } from "./router.js?v=20260603-1";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-3";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-3";
+import { archiveChild, createChild, loadChildren, loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer, updateChild } from "./api.js?v=20260603-3";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-3";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-3";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-3";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-3";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-3";
+import { getRoute, navigate } from "./router.js?v=20260603-3";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -22,9 +22,12 @@ let currentUser = null;
 let children = [];
 let selectedChildId = null;
 let observations = [];
+let summaryAnswers = [];
 let authMode = "signin";
 let printRedrawTimer = null;
 
+const PHOTO_SIZE = 256;
+const PHOTO_MAX_DATA_URL_LENGTH = 90000;
 const AVATAR_COLORS = ["#f08ab4", "#f6a06f", "#f0c85a", "#7cc7a8", "#76b7dc", "#a98bd8", "#2f746f", "#b8583c"];
 const AGE_BANDS = [
   { value: "0-2", label: "0-2 lata" },
@@ -60,6 +63,7 @@ async function boot() {
       children = [];
       selectedChildId = null;
       observations = [];
+      summaryAnswers = [];
       renderAuth();
     }
   });
@@ -176,6 +180,24 @@ function getSelectedChild() {
   return children.find((child) => child.id === selectedChildId) ?? null;
 }
 
+function renderChildAvatarHtml(child, className = "child-avatar") {
+  const color = child?.avatar_color || AVATAR_COLORS[0];
+  const name = child?.display_name || "Dziecko";
+  const image = child?.avatar_image;
+
+  return `
+    <span class="${className} ${image ? `${className}--image` : ""}" style="background: ${color}" aria-hidden="true">
+      ${image ? `<img class="${className}__image" src="${escapeHtml(image)}" alt="">` : childInitials(name)}
+    </span>
+  `;
+}
+
+function renderPhotoPreviewHtml(name, color, image, className = "child-photo__avatar") {
+  return image
+    ? `<img class="${className}__image" src="${escapeHtml(image)}" alt="">`
+    : childInitials(name || "Dziecko");
+}
+
 function selectChild(childId) {
   selectedChildId = childId;
   if (currentUser && childId) {
@@ -200,7 +222,17 @@ async function refreshChildrenAndData() {
 }
 
 async function refreshData() {
-  observations = selectedChildId ? await loadObservations(selectedChildId) : [];
+  if (!selectedChildId) {
+    observations = [];
+    summaryAnswers = [];
+    updateChildSwitcher();
+    return;
+  }
+
+  [observations, summaryAnswers] = await Promise.all([
+    loadObservations(selectedChildId),
+    loadSummaryAnswers(selectedChildId),
+  ]);
   updateChildSwitcher();
 }
 
@@ -213,7 +245,8 @@ function updateChildSwitcher() {
   }
 
   childSwitcherButton.hidden = false;
-  childSwitcherAvatar.textContent = childInitials(child.display_name);
+  childSwitcherAvatar.innerHTML = child.avatar_image ? `<img class="child-avatar__image" src="${escapeHtml(child.avatar_image)}" alt="">` : childInitials(child.display_name);
+  childSwitcherAvatar.classList.toggle("child-avatar--image", Boolean(child.avatar_image));
   childSwitcherAvatar.style.background = child.avatar_color || AVATAR_COLORS[0];
   childSwitcherName.textContent = child.display_name;
   childSwitcherMeta.textContent = formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || "Profil dziecka";
@@ -271,7 +304,7 @@ function renderNoChild() {
       <div class="hero">
         <p class="section-label">TenderNotes</p>
         <h2 class="hero__title">Dodaj dziecko</h2>
-        <p class="hero__text">KaĹĽde dziecko ma osobny dziennik, pytania i raport. DziÄ™ki temu obserwacje nie mieszajÄ… siÄ™ miÄ™dzy profilami.</p>
+        <p class="hero__text">Każde dziecko ma osobny dziennik, pytania i raport. Dzięki temu obserwacje nie mieszają się między profilami.</p>
         <div class="hero__actions">
           <button class="button" type="button" data-child-add>Dodaj dziecko</button>
         </div>
@@ -523,14 +556,14 @@ function updateAgeBandControls(form) {
     ageBand.value = ageBandForBirthMonth(birthMonth) || "0-2";
     ageBand.disabled = true;
     if (hint) {
-      hint.textContent = "PrzedziaĹ‚ ustawiony automatycznie z miesiÄ…ca urodzenia.";
+      hint.textContent = "Przedział ustawiony automatycznie z miesiąca urodzenia.";
     }
     return;
   }
 
   ageBand.disabled = false;
   if (hint) {
-    hint.textContent = "Bez daty urodzenia wybierz przedziaĹ‚ rÄ™cznie.";
+    hint.textContent = "Bez daty urodzenia wybierz przedział ręcznie.";
   }
 }
 
@@ -549,24 +582,212 @@ function selectedAvatarColor(form) {
   return form.querySelector('input[name="custom_avatar_color"]')?.value || AVATAR_COLORS[0];
 }
 
+function isPaletteColor(color) {
+  return AVATAR_COLORS.some((item) => item.toLowerCase() === color.toLowerCase());
+}
+
 function syncAvatarSwatches(form) {
   const color = selectedAvatarColor(form).toLowerCase();
   form.querySelectorAll('input[name="avatar_color"]').forEach((input) => {
     input.checked = input.value.toLowerCase() === color;
   });
+
+  const customChoice = form.querySelector("[data-custom-color-choice]");
+  const customSwatch = form.querySelector("[data-custom-color-swatch]");
+  if (customChoice) {
+    customChoice.classList.toggle("is-selected", !isPaletteColor(color));
+  }
+  if (customSwatch) {
+    customSwatch.style.background = color;
+  }
 }
 
 function updateColorPreview(form) {
   const preview = form.querySelector("#childPhotoPreview");
   const name = form.querySelector('input[name="display_name"]')?.value || "Dziecko";
+  const image = form.querySelector('input[name="avatar_image"]')?.value || "";
 
   if (!preview) {
     return;
   }
 
   syncAvatarSwatches(form);
-  preview.textContent = childInitials(name);
+  preview.innerHTML = renderPhotoPreviewHtml(name, selectedAvatarColor(form), image);
+  preview.classList.toggle("child-photo__avatar--image", Boolean(image));
   preview.style.background = selectedAvatarColor(form);
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function initPhotoState(form) {
+  form._photoState = {
+    image: null,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    dragStartX: 0,
+    dragStartY: 0,
+    startOffsetX: 0,
+    startOffsetY: 0,
+  };
+}
+
+function getPhotoState(form) {
+  if (!form._photoState) {
+    initPhotoState(form);
+  }
+  return form._photoState;
+}
+
+function photoCropMetrics(form) {
+  const state = getPhotoState(form);
+  const crop = form.querySelector("#photoCrop");
+  const size = crop?.clientWidth || 180;
+  const naturalWidth = state.image?.naturalWidth || PHOTO_SIZE;
+  const naturalHeight = state.image?.naturalHeight || PHOTO_SIZE;
+  const scale = Math.max(size / naturalWidth, size / naturalHeight) * state.zoom;
+  const renderedWidth = naturalWidth * scale;
+  const renderedHeight = naturalHeight * scale;
+  const maxOffsetX = Math.max(0, (renderedWidth - size) / 2);
+  const maxOffsetY = Math.max(0, (renderedHeight - size) / 2);
+
+  state.offsetX = clamp(state.offsetX, -maxOffsetX, maxOffsetX);
+  state.offsetY = clamp(state.offsetY, -maxOffsetY, maxOffsetY);
+
+  return { size, naturalWidth, naturalHeight, scale, renderedWidth, renderedHeight };
+}
+
+function renderPhotoCrop(form) {
+  const state = getPhotoState(form);
+  const image = form.querySelector("#photoCropImage");
+  const editor = form.querySelector("#photoEditor");
+
+  if (!image || !state.image) {
+    if (editor) {
+      editor.hidden = true;
+    }
+    return;
+  }
+
+  const metrics = photoCropMetrics(form);
+  image.src = state.image.src;
+  image.style.width = `${metrics.renderedWidth}px`;
+  image.style.height = `${metrics.renderedHeight}px`;
+  image.style.transform = `translate(calc(-50% + ${state.offsetX}px), calc(-50% + ${state.offsetY}px))`;
+  if (editor) {
+    editor.hidden = false;
+  }
+}
+
+function compressedPhotoDataUrl(form) {
+  const state = getPhotoState(form);
+  if (!state.image) {
+    return form.querySelector('input[name="avatar_image"]')?.value || "";
+  }
+
+  const metrics = photoCropMetrics(form);
+  const sourceSize = metrics.size / metrics.scale;
+  const centerX = metrics.naturalWidth / 2 - state.offsetX / metrics.scale;
+  const centerY = metrics.naturalHeight / 2 - state.offsetY / metrics.scale;
+  const sourceX = clamp(centerX - sourceSize / 2, 0, Math.max(0, metrics.naturalWidth - sourceSize));
+  const sourceY = clamp(centerY - sourceSize / 2, 0, Math.max(0, metrics.naturalHeight - sourceSize));
+  const canvas = document.createElement("canvas");
+  canvas.width = PHOTO_SIZE;
+  canvas.height = PHOTO_SIZE;
+  const context = canvas.getContext("2d");
+  context.fillStyle = selectedAvatarColor(form);
+  context.fillRect(0, 0, PHOTO_SIZE, PHOTO_SIZE);
+  context.drawImage(state.image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, PHOTO_SIZE, PHOTO_SIZE);
+
+  const candidates = [
+    canvas.toDataURL("image/webp", 0.78),
+    canvas.toDataURL("image/webp", 0.64),
+    canvas.toDataURL("image/jpeg", 0.72),
+  ];
+
+  return candidates.find((item) => item.length <= PHOTO_MAX_DATA_URL_LENGTH) || candidates[candidates.length - 1];
+}
+
+function updateCompressedPhoto(form) {
+  const input = form.querySelector('input[name="avatar_image"]');
+  if (!input) {
+    return "";
+  }
+
+  input.value = compressedPhotoDataUrl(form);
+  updateColorPreview(form);
+  return input.value;
+}
+
+function handlePhotoFile(form, file) {
+  if (!file || !file.type.startsWith("image/")) {
+    return;
+  }
+
+  const image = new Image();
+  image.onload = () => {
+    const state = getPhotoState(form);
+    state.image = image;
+    state.zoom = 1;
+    state.offsetX = 0;
+    state.offsetY = 0;
+    const zoomInput = form.querySelector('input[name="photo_zoom"]');
+    if (zoomInput) {
+      zoomInput.value = "1";
+    }
+    renderPhotoCrop(form);
+    updateCompressedPhoto(form);
+  };
+  image.src = URL.createObjectURL(file);
+}
+
+function wirePhotoEditor(form) {
+  const fileInput = form.querySelector('input[name="avatar_file"]');
+  const pickButton = form.querySelector("[data-child-photo-pick]");
+  const zoomInput = form.querySelector('input[name="photo_zoom"]');
+  const crop = form.querySelector("#photoCrop");
+  const state = getPhotoState(form);
+
+  pickButton?.addEventListener("click", () => fileInput?.click());
+  fileInput?.addEventListener("change", () => handlePhotoFile(form, fileInput.files?.[0]));
+  form.querySelectorAll("[data-child-photo-remove]").forEach((removeButton) => removeButton.addEventListener("click", () => {
+    state.image = null;
+    form.querySelector('input[name="avatar_image"]').value = "";
+    renderPhotoCrop(form);
+    updateColorPreview(form);
+  }));
+  zoomInput?.addEventListener("input", () => {
+    state.zoom = Number(zoomInput.value) || 1;
+    renderPhotoCrop(form);
+    updateCompressedPhoto(form);
+  });
+
+  crop?.addEventListener("pointerdown", (event) => {
+    if (!state.image) {
+      return;
+    }
+    crop.setPointerCapture(event.pointerId);
+    state.dragStartX = event.clientX;
+    state.dragStartY = event.clientY;
+    state.startOffsetX = state.offsetX;
+    state.startOffsetY = state.offsetY;
+  });
+  crop?.addEventListener("pointermove", (event) => {
+    if (!state.image || !crop.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+    state.offsetX = state.startOffsetX + event.clientX - state.dragStartX;
+    state.offsetY = state.startOffsetY + event.clientY - state.dragStartY;
+    renderPhotoCrop(form);
+  });
+  crop?.addEventListener("pointerup", (event) => {
+    if (crop.hasPointerCapture(event.pointerId)) {
+      crop.releasePointerCapture(event.pointerId);
+      updateCompressedPhoto(form);
+    }
+  });
 }
 
 function renderChildSheet(editChildId = "") {
@@ -594,7 +815,7 @@ function renderChildSheet(editChildId = "") {
             (child) => `
               <article class="child-card ${child.id === selectedChildId ? "is-selected" : ""}">
                 <button class="child-card__main" type="button" data-child-select="${child.id}">
-                  <span class="child-avatar" style="background: ${child.avatar_color || AVATAR_COLORS[0]}" aria-hidden="true">${childInitials(child.display_name)}</span>
+                  ${renderChildAvatarHtml(child)}
                   <span>
                     <strong>${escapeHtml(child.display_name)}</strong>
                     <small>${escapeHtml(formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || "Profil dziecka")}</small>
@@ -620,13 +841,27 @@ function renderChildSheet(editChildId = "") {
       <form class="child-form panel" id="childForm" data-edit-child-id="${editingChild?.id ?? ""}">
         <div class="child-form__top">
           <div class="child-photo">
-            <span class="child-photo__avatar" id="childPhotoPreview" style="background: ${selectedColor}" aria-hidden="true">${childInitials(editingChild?.display_name ?? "Dziecko")}</span>
-            <button class="child-photo__add" type="button" aria-label="Zdjęcie dziecka będzie dostępne później" title="Zdjęcie dziecka będzie dostępne później">+</button>
+            <span class="child-photo__avatar ${editingChild?.avatar_image ? "child-photo__avatar--image" : ""}" id="childPhotoPreview" style="background: ${selectedColor}" aria-hidden="true">${renderPhotoPreviewHtml(editingChild?.display_name ?? "Dziecko", selectedColor, editingChild?.avatar_image ?? "")}</span>
+            <button class="child-photo__add" type="button" data-child-photo-pick aria-label="Dodaj lub zmień zdjęcie">+</button>
           </div>
           <div>
             <h3 class="panel__title">${editingChild ? "Edytuj profil" : "Nowe dziecko"}</h3>
-            <p class="panel__hint">Zdjęcie dodamy później. Na razie avatar używa inicjałów i koloru.</p>
+            <p class="panel__hint">Zdjęcie jest opcjonalne. Przed zapisem zostanie przycięte i zmniejszone.</p>
+            ${editingChild?.avatar_image ? `<button class="text-button" type="button" data-child-photo-remove>Usuń zdjęcie</button>` : ""}
           </div>
+        </div>
+        <input type="file" name="avatar_file" accept="image/*" hidden>
+        <input type="hidden" name="avatar_image" value="${escapeHtml(editingChild?.avatar_image ?? "")}">
+        <div class="photo-editor" id="photoEditor" hidden>
+          <div class="photo-editor__crop" id="photoCrop" aria-label="Kadr zdjęcia">
+            <img class="photo-editor__image" id="photoCropImage" alt="">
+          </div>
+          <label class="field photo-editor__zoom">
+            <span class="field__label">Przybliżenie</span>
+            <input class="field__range" type="range" name="photo_zoom" min="1" max="2.8" step="0.05" value="1">
+          </label>
+          <p class="field__hint">Przeciągnij zdjęcie w kwadracie, żeby ustawić kadr.</p>
+          <button class="button button--ghost" type="button" data-child-photo-remove>Usuń zdjęcie</button>
         </div>
         <label class="field">
           <span class="field__label">Imię lub nazwa</span>
@@ -647,11 +882,12 @@ function renderChildSheet(editChildId = "") {
           <legend class="field__label">Kolor avatara</legend>
           <div class="color-choice-group__items">
             ${renderAvatarColorOptions(selectedColor)}
+            <label class="color-choice color-choice--custom" title="Własny kolor" data-custom-color-choice>
+              <input class="color-choice__input" type="color" name="custom_avatar_color" value="${escapeHtml(selectedColor)}">
+              <span class="color-choice__swatch" style="background: ${selectedColor}" data-custom-color-swatch aria-hidden="true"></span>
+              <span class="color-choice__caption">Własny</span>
+            </label>
           </div>
-          <label class="color-custom">
-            <span>Własny kolor</span>
-            <input type="color" name="custom_avatar_color" value="${escapeHtml(selectedColor)}">
-          </label>
         </fieldset>
         <div class="child-form__actions">
           <button class="button" type="submit">${editingChild ? "Zapisz" : "Dodaj"}</button>
@@ -679,6 +915,7 @@ function renderChildSheet(editChildId = "") {
       }),
     );
     form.querySelector('input[name="display_name"]').addEventListener("input", () => updateColorPreview(form));
+    wirePhotoEditor(form);
     updateAgeBandControls(form);
     updateColorPreview(form);
     form.querySelector('input[name="display_name"]')?.focus();
@@ -701,11 +938,13 @@ async function handleChildSubmit(event) {
   const formData = new FormData(form);
   const editChildId = form.dataset.editChildId;
   const birthMonth = formData.get("birth_month")?.toString() ?? "";
+  updateCompressedPhoto(form);
   const payload = {
     display_name: formData.get("display_name").toString().trim(),
     birth_month: toBirthMonth(birthMonth),
     age_band: birthMonth ? ageBandForBirthMonth(birthMonth) : formData.get("age_band")?.toString() || "0-2",
     avatar_color: selectedAvatarColor(form),
+    avatar_image: form.querySelector('input[name="avatar_image"]')?.value || null,
   };
 
   try {
@@ -726,7 +965,7 @@ function renderHistory() {
 }
 
 function renderReport() {
-  app.innerHTML = renderReportHtml(observations, getSelectedChild());
+  app.innerHTML = renderReportHtml(observations, getSelectedChild(), summaryAnswers);
   requestAnimationFrame(drawReportCharts);
 }
 
@@ -762,27 +1001,36 @@ function wirePrintRedraw() {
   });
 }
 
-async function renderSummary() {
-  const answers = await loadSummaryAnswers(selectedChildId);
-  app.innerHTML = renderSummaryHtml(answers);
+async function renderSummary(message = "") {
+  summaryAnswers = await loadSummaryAnswers(selectedChildId);
+  app.innerHTML = renderSummaryHtml(summaryAnswers, message);
   app.querySelector("#summaryForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+    const submitButton = form.querySelector('button[type="submit"]');
     const rows = Array.from(form.querySelectorAll("[data-question-key]"));
+    submitButton.disabled = true;
+    submitButton.textContent = "Zapisuję...";
 
-    await Promise.all(
-      rows.map((row) => {
-        const key = row.dataset.questionKey;
-        const formData = new FormData(form);
-        return saveSummaryAnswer(selectedChildId, key, {
-          answer: formData.get(`${key}_answer`) || null,
-          evidence: formData.get(`${key}_evidence`)?.toString().trim() ?? "",
-          next_step: formData.get(`${key}_next_step`)?.toString().trim() ?? "",
-        });
-      }),
-    );
+    try {
+      await Promise.all(
+        rows.map((row) => {
+          const key = row.dataset.questionKey;
+          const formData = new FormData(form);
+          return saveSummaryAnswer(selectedChildId, key, {
+            answer: formData.get(`${key}_answer`) || null,
+            evidence: formData.get(`${key}_evidence`)?.toString().trim() ?? "",
+            next_step: formData.get(`${key}_next_step`)?.toString().trim() ?? "",
+          });
+        }),
+      );
 
-    navigate("report");
+      await renderSummary("Zapisano podsumowanie. Odpowiedzi są widoczne poniżej i w raporcie.");
+    } catch (error) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Zapisz podsumowanie";
+      form.insertAdjacentHTML("beforebegin", `<p class="notice notice--error">${escapeHtml(translateError(error.message))}</p>`);
+    }
   });
 }
 
@@ -838,7 +1086,7 @@ document.body.addEventListener("click", (event) => {
 
   const childArchive = event.target.closest("[data-child-archive]");
   if (childArchive) {
-    if (!window.confirm("ZarchiwizowaÄ‡ ten profil? Dane zostanÄ… zachowane, a profil zniknie z listy.")) {
+    if (!window.confirm("Zarchiwizować ten profil? Dane zostaną zachowane, a profil zniknie z listy.")) {
       return;
     }
 
