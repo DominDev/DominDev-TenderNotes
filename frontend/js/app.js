@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-9";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-9";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-10";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-10";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260603-9";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-9";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-9";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-9";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-9";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-9";
-import { getRoute, navigate } from "./router.js?v=20260603-9";
+} from "./api.js?v=20260603-10";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-10";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-10";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-10";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-10";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-10";
+import { getRoute, navigate } from "./router.js?v=20260603-10";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -613,6 +613,11 @@ function renderEntry(dayNumber) {
   if (readOnly) {
     app.querySelector("#daySelect").addEventListener("change", (event) => {
       navigate("entry", { day: event.target.value });
+    });
+    app.querySelectorAll("[data-readonly-score]").forEach((button) => {
+      button.addEventListener("click", () => {
+        setNotice(notice, "error", "Masz dostęp do podglądu. Ten profil nie pozwala zmieniać odpowiedzi.");
+      });
     });
     return;
   }

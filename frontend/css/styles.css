@@ -772,6 +772,10 @@ button {
   border-color: var(--color-accent);
 }
 
+.score-options__button[aria-disabled="true"] {
+  opacity: 0.74;
+}
+
 .score-options__icon {
   width: 34px;
   height: 34px;

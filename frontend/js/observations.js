@@ -77,7 +77,7 @@ export function renderObservationFormHtml(dayNumber, observation, options = {}) 
                         data-field="${field.key}"
                         data-value="${item.value}"
                         aria-pressed="${value === item.value ? "true" : "false"}"
-                        ${readOnly ? "disabled" : ""}
+                        ${readOnly ? 'aria-disabled="true" data-readonly-score' : ""}
                       >
                         <span class="score-options__icon state-icon ${item.iconClass}" aria-hidden="true">${item.icon}</span>
                         <span class="score-options__label visually-hidden">${escapeHtml(item.label)}</span>
