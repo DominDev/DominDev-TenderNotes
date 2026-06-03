@@ -1,6 +1,6 @@
 import { OBSERVATION_FIELDS, SCALE, SCORE_MAX, SUMMARY_QUESTIONS, TOTAL_DAYS } from "./constants.js";
 import { AREA_COLORS } from "./charts.js";
-import { completionCount, escapeHtml, formatDate, formatSerenityIndex, formatSerenityIndexScore, parseNotes, toSerenityIndex } from "./utils.js";
+import { completionCount, escapeHtml, formatChildAge, formatDate, formatSerenityIndex, formatSerenityIndexScore, parseNotes, toSerenityIndex } from "./utils.js";
 
 export function buildReport(observations) {
   const completedDays = observations.filter((observation) => completionCount(observation) > 0);
@@ -203,14 +203,17 @@ function reportHeroText(serenityIndex) {
   return "W ostatnich wpisach przeważają spokojne momenty. To raczej uspokajający sygnał. Warto dalej zapisywać kolejne dni, żeby zobaczyć, czy ten rytm się utrzymuje.";
 }
 
-export function renderReportHtml(observations) {
+export function renderReportHtml(observations, child = null) {
   const report = buildReport(observations);
+  const childAge = formatChildAge(child);
+  const childLabel = child ? `${escapeHtml(child.display_name)}${childAge ? ` · ${escapeHtml(childAge)}` : ""}` : "";
 
   return `
     <section class="dashboard">
       <div class="hero report-hero" style="${reportHeroStyle(report.average)}">
         <p class="section-label">Wskaźnik spokoju</p>
         <h2 class="hero__title">${formatSerenityIndexScore(report.average)}</h2>
+        ${childLabel ? `<p class="report-hero__child">${childLabel}</p>` : ""}
         <p class="hero__text">${reportHeroText(report.serenityIndex)}</p>
       </div>
 

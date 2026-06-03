@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f7efe6">
     <title>TenderNotes</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/styles.css?v=20260602-5">
+    <link rel="stylesheet" href="./css/styles.css?v=20260603-1">
   </head>
   <body>
     <div class="app-shell">
@@ -18,13 +18,22 @@
           <h1 class="topbar__title" id="viewTitle">Dziennik</h1>
           </div>
         </div>
-        <button class="icon-button" id="logoutButton" type="button" aria-label="Wyloguj" title="Wyloguj">
-          <svg class="icon-button__svg" aria-hidden="true" viewBox="0 0 24 24">
-            <path d="M10 6H6.8A1.8 1.8 0 0 0 5 7.8v8.4A1.8 1.8 0 0 0 6.8 18H10" />
-            <path d="M14 8l4 4-4 4" />
-            <path d="M9 12h9" />
-          </svg>
-        </button>
+        <div class="topbar__actions">
+          <button class="child-switcher" id="childSwitcherButton" type="button" hidden>
+            <span class="child-avatar" id="childSwitcherAvatar" aria-hidden="true">TN</span>
+            <span class="child-switcher__text">
+              <span class="child-switcher__name" id="childSwitcherName">Dziecko</span>
+              <span class="child-switcher__meta" id="childSwitcherMeta">Wybierz profil</span>
+            </span>
+          </button>
+          <button class="icon-button" id="logoutButton" type="button" aria-label="Wyloguj" title="Wyloguj">
+            <svg class="icon-button__svg" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M10 6H6.8A1.8 1.8 0 0 0 5 7.8v8.4A1.8 1.8 0 0 0 6.8 18H10" />
+              <path d="M14 8l4 4-4 4" />
+              <path d="M9 12h9" />
+            </svg>
+          </button>
+        </div>
       </header>
 
       <main class="main" id="app">
@@ -54,6 +63,6 @@
       </nav>
     </div>
 
-    <script type="module" src="./js/app.js?v=20260602-5"></script>
+    <script type="module" src="./js/app.js?v=20260603-1"></script>
   </body>
 </html>

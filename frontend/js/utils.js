@@ -37,6 +37,56 @@ export function formatDate(dateValue) {
   }).format(new Date(`${dateValue}T00:00:00`));
 }
 
+export function formatBirthMonth(monthValue) {
+  if (!monthValue) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("pl-PL", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${monthValue.slice(0, 7)}-01T00:00:00`));
+}
+
+export function formatChildAge(child) {
+  if (!child) {
+    return "";
+  }
+
+  if (!child.birth_month) {
+    return child.age_band ? `${child.age_band} lata` : "";
+  }
+
+  const birth = new Date(`${child.birth_month.slice(0, 7)}-01T00:00:00`);
+  const now = new Date();
+  const months = Math.max(0, (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth());
+
+  if (months < 24) {
+    return `${months} mies.`;
+  }
+
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return rest ? `${years} l. ${rest} mies.` : `${years} l.`;
+}
+
+export function childInitials(name) {
+  const parts = String(name ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!parts.length) {
+    return "TN";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
 export function todayIso() {
   const date = new Date();
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
