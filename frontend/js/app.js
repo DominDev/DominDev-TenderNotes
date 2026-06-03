@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-7";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-7";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-8";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-8";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260603-7";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-7";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-7";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-7";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-7";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-7";
-import { getRoute, navigate } from "./router.js?v=20260603-7";
+} from "./api.js?v=20260603-8";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-8";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-8";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-8";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-8";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-8";
+import { getRoute, navigate } from "./router.js?v=20260603-8";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -66,7 +66,7 @@ const MEMBER_ROLES = [
 
 const titles = {
   dashboard: "Dziennik",
-  entry: "Wpis dzienny",
+  entry: "Wpis",
   history: "Historia",
   report: "Raport",
   summary: "Pytania otwarte",
@@ -463,14 +463,10 @@ function updateChildSwitcher() {
   childSwitcherButton.hidden = false;
   childSwitcherAvatar.innerHTML = child.avatar_image ? `<img class="child-avatar__image" src="${escapeHtml(child.avatar_image)}" alt="">` : childInitials(child.display_name);
   childSwitcherAvatar.classList.toggle("child-avatar--image", Boolean(child.avatar_image));
+  childSwitcherAvatar.classList.toggle("child-avatar--shared", isSharedChild(child));
   childSwitcherAvatar.style.background = child.avatar_color || AVATAR_COLORS[0];
   childSwitcherName.textContent = child.display_name;
-  childSwitcherMeta.classList.toggle("is-shared", isSharedChild(child));
-  if (isSharedChild(child)) {
-    childSwitcherMeta.innerHTML = `${sharedIndicatorHtml()}<span>${escapeHtml(childAccessLabel(child))}</span>`;
-  } else {
-    childSwitcherMeta.textContent = formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || "Profil dziecka";
-  }
+  childSwitcherMeta.textContent = formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || roleLabel(child.member_role);
 }
 
 function renderChrome(routeName) {
