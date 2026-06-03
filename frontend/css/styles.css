@@ -1159,6 +1159,15 @@ button {
   height: 38px;
 }
 
+.child-card__readonly {
+  width: 38px;
+  height: 38px;
+  color: var(--color-muted);
+  background: #f7f1ea;
+  opacity: 0.72;
+  cursor: default;
+}
+
 .child-card__plus {
   width: 38px;
   height: 38px;

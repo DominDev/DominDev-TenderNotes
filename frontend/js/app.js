@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-8";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-8";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-9";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-9";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260603-8";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-8";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-8";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-8";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-8";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-8";
-import { getRoute, navigate } from "./router.js?v=20260603-8";
+} from "./api.js?v=20260603-9";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-9";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-9";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-9";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-9";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-9";
+import { getRoute, navigate } from "./router.js?v=20260603-9";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -61,7 +61,7 @@ const AGE_BANDS = [
 ];
 const MEMBER_ROLES = [
   { value: "editor", label: "Edytor", help: "Może uzupełniać wpisy, notatki i pytania." },
-  { value: "viewer", label: "Tylko podgląd", help: "Może czytać historię i raport bez edycji." },
+  { value: "viewer", label: "Podgląd", help: "Może czytać historię i raport bez edycji." },
 ];
 
 const titles = {
@@ -1158,7 +1158,19 @@ function renderChildSheet(editChildId = "", sharing = { members: [], invitations
                     ${renderChildAccessBadgesHtml(child)}
                   </span>
                 </button>
-                ${canEditChild(child) ? `<button class="icon-button child-card__edit" type="button" data-child-edit="${child.id}" aria-label="Edytuj ${escapeHtml(child.display_name)}">✎</button>` : `<span class="pill">Podgląd</span>`}
+                ${
+                  canEditChild(child)
+                    ? `<button class="icon-button child-card__edit" type="button" data-child-edit="${child.id}" aria-label="Edytuj ${escapeHtml(child.display_name)}">✎</button>`
+                    : `
+                      <span class="icon-button child-card__readonly" aria-label="Brak edycji" title="Brak edycji">
+                        <svg class="icon-button__svg" aria-hidden="true" viewBox="0 0 24 24">
+                          <path d="M2.5 12s3.5-5.5 9.5-5.5S21.5 12 21.5 12s-3.5 5.5-9.5 5.5S2.5 12 2.5 12Z" />
+                          <path d="M12 9.5a2.5 2.5 0 1 1 0 5a2.5 2.5 0 0 1 0-5Z" />
+                          <path d="M4 4l16 16" />
+                        </svg>
+                      </span>
+                    `
+                }
               </article>
             `,
           )
