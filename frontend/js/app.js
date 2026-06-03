@@ -1,12 +1,30 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-4";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-4";
-import { archiveChild, createChild, loadChildren, loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer, updateChild } from "./api.js?v=20260603-4";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-4";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-4";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-4";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-4";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-4";
-import { getRoute, navigate } from "./router.js?v=20260603-4";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-5";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-5";
+import {
+  acceptChildInvitation,
+  archiveChild,
+  cancelChildInvitation,
+  createChild,
+  declineChildInvitation,
+  inviteChildMember,
+  loadChildInvitations,
+  loadChildMembers,
+  loadChildren,
+  loadMyInvitations,
+  loadObservations,
+  loadSummaryAnswers,
+  removeChildMember,
+  saveObservation,
+  saveSummaryAnswer,
+  updateChild,
+  updateChildMemberRole,
+} from "./api.js?v=20260603-5";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-5";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-5";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-5";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-5";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-5";
+import { getRoute, navigate } from "./router.js?v=20260603-5";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -23,6 +41,7 @@ let children = [];
 let selectedChildId = null;
 let observations = [];
 let summaryAnswers = [];
+let pendingInvitations = [];
 let authMode = "signin";
 let printRedrawTimer = null;
 
@@ -35,6 +54,10 @@ const AGE_BANDS = [
   { value: "6-8", label: "6-8 lat" },
   { value: "9-12", label: "9-12 lat" },
   { value: "13+", label: "13+ lat" },
+];
+const MEMBER_ROLES = [
+  { value: "editor", label: "Edytor", help: "Może uzupełniać wpisy, notatki i pytania." },
+  { value: "viewer", label: "Tylko podgląd", help: "Może czytać historię i raport bez edycji." },
 ];
 
 const titles = {
@@ -64,6 +87,7 @@ async function boot() {
       selectedChildId = null;
       observations = [];
       summaryAnswers = [];
+      pendingInvitations = [];
       renderAuth();
     }
   });
@@ -196,6 +220,21 @@ function getSelectedChild() {
   return children.find((child) => child.id === selectedChildId) ?? null;
 }
 
+function roleLabel(role) {
+  if (role === "owner") {
+    return "Właściciel";
+  }
+  return MEMBER_ROLES.find((item) => item.value === role)?.label ?? "Opiekun";
+}
+
+function canEditChild(child = getSelectedChild()) {
+  return child?.member_role === "owner" || child?.member_role === "editor";
+}
+
+function canManageChild(child = getSelectedChild()) {
+  return child?.member_role === "owner";
+}
+
 function renderChildAvatarHtml(child, className = "child-avatar") {
   const color = child?.avatar_color || AVATAR_COLORS[0];
   const name = child?.display_name || "Dziecko";
@@ -212,6 +251,45 @@ function renderPhotoPreviewHtml(name, color, image, className = "child-photo__av
   return image
     ? `<img class="${className}__image" src="${escapeHtml(image)}" alt="">`
     : childInitials(name || "Dziecko");
+}
+
+function invitationChild(invitation) {
+  return Array.isArray(invitation.children) ? invitation.children[0] : invitation.children;
+}
+
+function renderPendingInvitationsHtml() {
+  if (!pendingInvitations.length) {
+    return "";
+  }
+
+  return `
+    <section class="panel invite-panel">
+      <h3 class="panel__title">Zaproszenia do profilu dziecka</h3>
+      <div class="invite-list">
+        ${pendingInvitations
+          .map((invitation) => {
+            const child = invitationChild(invitation) ?? {};
+            const displayName = child.display_name || "Profil dziecka";
+            return `
+              <article class="invite-card" data-invitation-id="${invitation.id}">
+                <div class="invite-card__main">
+                  ${renderChildAvatarHtml({ ...child, display_name: displayName })}
+                  <span>
+                    <strong>${escapeHtml(displayName)}</strong>
+                    <small>Rola: ${roleLabel(invitation.role)}</small>
+                  </span>
+                </div>
+                <div class="invite-card__actions">
+                  <button class="button button--secondary" type="button" data-invitation-accept="${invitation.id}">Przyjmij</button>
+                  <button class="button button--ghost" type="button" data-invitation-decline="${invitation.id}">Odrzuć</button>
+                </div>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    </section>
+  `;
 }
 
 function selectChild(childId) {
@@ -232,7 +310,10 @@ function ensureSelectedChild() {
 }
 
 async function refreshChildrenAndData() {
-  children = await loadChildren();
+  [children, pendingInvitations] = await Promise.all([
+    loadChildren(),
+    loadMyInvitations(),
+  ]);
   ensureSelectedChild();
   await refreshData();
 }
@@ -325,6 +406,7 @@ function renderNoChild() {
           <button class="button" type="button" data-child-add>Dodaj dziecko</button>
         </div>
       </div>
+      ${renderPendingInvitationsHtml()}
     </section>
   `;
 }
@@ -348,10 +430,12 @@ function renderDashboard() {
         <h2 class="hero__title">Dzień po dniu</h2>
         <p class="hero__text">Zapisuj krótkie obserwacje po dniu. TenderNotes pomaga zobaczyć, co wraca najczęściej i gdzie dzień układa się spokojnie.</p>
         <div class="hero__actions">
-          <button class="button" type="button" data-route-action="entry">Wypełnij dzień</button>
+          ${canEditChild() ? `<button class="button" type="button" data-route-action="entry">Wypełnij dzień</button>` : ""}
           <button class="button button--secondary" type="button" data-route-action="report">Zobacz raport</button>
         </div>
       </div>
+
+      ${renderPendingInvitationsHtml()}
 
       <div class="metrics">
         <article class="metric">
@@ -374,9 +458,17 @@ function renderDashboard() {
 
       <section class="panel">
         <h3 class="panel__title">Następny krok</h3>
-        <p class="panel__hint">Najbliższy dzień do uzupełnienia: ${suggestedNextDay(observations)}. Wystarczy kilka spokojnych odpowiedzi i krótka notatka.</p>
+        <p class="panel__hint">${
+          canEditChild()
+            ? `Najbliższy dzień do uzupełnienia: ${suggestedNextDay(observations)}. Wystarczy kilka spokojnych odpowiedzi i krótka notatka.`
+            : "Masz dostęp tylko do podglądu. Możesz czytać historię i raport bez zmiany wpisów."
+        }</p>
         <div class="action-row">
-          <button class="button button--secondary" type="button" data-route-action="entry" data-day="${suggestedNextDay(observations)}">Otwórz dzień</button>
+          ${
+            canEditChild()
+              ? `<button class="button button--secondary" type="button" data-route-action="entry" data-day="${suggestedNextDay(observations)}">Otwórz dzień</button>`
+              : `<button class="button button--secondary" type="button" data-route-action="history">Zobacz historię</button>`
+          }
         </div>
       </section>
     </section>
@@ -386,7 +478,8 @@ function renderDashboard() {
 function renderEntry(dayNumber) {
   const day = Math.max(1, Math.min(TOTAL_DAYS, dayNumber));
   const observation = observations.find((item) => item.day_number === day);
-  app.innerHTML = renderObservationFormHtml(day, observation);
+  const readOnly = !canEditChild();
+  app.innerHTML = renderObservationFormHtml(day, observation, { readOnly });
   const form = app.querySelector("#observationForm");
   const notice = app.querySelector("#formNotice");
   const getCurrentObservation = () => observations.find((item) => item.day_number === day);
@@ -395,6 +488,13 @@ function renderEntry(dayNumber) {
     payload.notes = serializeNotes(notes);
     return payload;
   };
+
+  if (readOnly) {
+    app.querySelector("#daySelect").addEventListener("change", (event) => {
+      navigate("entry", { day: event.target.value });
+    });
+    return;
+  }
 
   wireScoreButtons(app, async () => {
     const currentNotes = parseNotes(getCurrentObservation()?.notes);
@@ -806,11 +906,110 @@ function wirePhotoEditor(form) {
   });
 }
 
-function renderChildSheet(editChildId = "") {
+async function loadChildSharing(child) {
+  if (!child || !canManageChild(child)) {
+    return { members: [], invitations: [] };
+  }
+
+  const [members, invitations] = await Promise.all([
+    loadChildMembers(child.id),
+    loadChildInvitations(child.id),
+  ]);
+
+  return { members, invitations };
+}
+
+function renderCaregiverName(member) {
+  return member.member_display_name || member.member_email || "Opiekun";
+}
+
+function renderSharingPanel(child, sharing) {
+  if (!child || !canManageChild(child)) {
+    return "";
+  }
+
+  const members = sharing.members ?? [];
+  const invitations = sharing.invitations ?? [];
+
+  return `
+    <section class="sharing-panel panel">
+      <h3 class="panel__title">Opiekunowie</h3>
+      <p class="panel__hint">Udostępnij profil drugiemu opiekunowi. Edytor może uzupełniać wpisy, a podgląd pozwala tylko czytać historię i raport.</p>
+
+      <form class="share-form" id="shareForm" data-share-child-id="${child.id}">
+        <label class="field">
+          <span class="field__label">Email opiekuna</span>
+          <input class="field__input" type="email" name="invite_email" inputmode="email" autocomplete="email" required>
+        </label>
+        <label class="field">
+          <span class="field__label">Rola</span>
+          <select class="field__select" name="invite_role">
+            ${MEMBER_ROLES.map((role) => `<option value="${role.value}">${role.label} - ${role.help}</option>`).join("")}
+          </select>
+        </label>
+        <button class="button button--secondary" type="submit">Zaproś opiekuna</button>
+        <p class="notice" id="shareNotice" hidden></p>
+      </form>
+
+      <div class="caregiver-list">
+        ${members
+          .map(
+            (member) => `
+              <article class="caregiver-card">
+                <div>
+                  <strong>${escapeHtml(renderCaregiverName(member))}</strong>
+                  <small>${escapeHtml(member.member_email || "Email niedostępny")} · ${roleLabel(member.role)}</small>
+                </div>
+                ${
+                  member.role === "owner"
+                    ? `<span class="pill pill--good">Właściciel</span>`
+                    : `
+                      <div class="caregiver-card__actions">
+                        <select class="field__select caregiver-card__select" data-member-role="${member.user_id}" data-child-id="${member.child_id}" aria-label="Zmień rolę">
+                          ${MEMBER_ROLES.map((role) => `<option value="${role.value}" ${role.value === member.role ? "selected" : ""}>${role.label}</option>`).join("")}
+                        </select>
+                        <button class="icon-button" type="button" data-member-remove="${member.user_id}" data-child-id="${member.child_id}" aria-label="Usuń opiekuna" title="Usuń opiekuna">×</button>
+                      </div>
+                    `
+                }
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+
+      ${
+        invitations.length
+          ? `
+            <div class="pending-share-list">
+              <p class="field__label">Oczekujące zaproszenia</p>
+              ${invitations
+                .map(
+                  (invitation) => `
+                    <article class="caregiver-card">
+                      <div>
+                        <strong>${escapeHtml(invitation.email)}</strong>
+                        <small>${roleLabel(invitation.role)} · oczekuje na przyjęcie</small>
+                      </div>
+                      <button class="button button--ghost" type="button" data-invitation-cancel="${invitation.id}">Anuluj</button>
+                    </article>
+                  `,
+                )
+                .join("")}
+            </div>
+          `
+          : ""
+      }
+    </section>
+  `;
+}
+
+function renderChildSheet(editChildId = "", sharing = { members: [], invitations: [] }) {
   const isNewChild = editChildId === "new";
   const editingChild = isNewChild ? null : children.find((child) => child.id === editChildId) ?? null;
   const showForm = isNewChild || Boolean(editingChild);
   const selectedColor = editingChild?.avatar_color || AVATAR_COLORS[0];
+  const allowEditProfile = !editingChild || canEditChild(editingChild);
   const sheet = document.createElement("div");
   sheet.className = "child-sheet";
   sheet.id = "childSheet";
@@ -837,7 +1036,7 @@ function renderChildSheet(editChildId = "") {
                     <small>${escapeHtml(formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || "Profil dziecka")}</small>
                   </span>
                 </button>
-                <button class="icon-button child-card__edit" type="button" data-child-edit="${child.id}" aria-label="Edytuj ${escapeHtml(child.display_name)}">✎</button>
+                ${canEditChild(child) ? `<button class="icon-button child-card__edit" type="button" data-child-edit="${child.id}" aria-label="Edytuj ${escapeHtml(child.display_name)}">✎</button>` : `<span class="pill">Podgląd</span>`}
               </article>
             `,
           )
@@ -854,7 +1053,7 @@ function renderChildSheet(editChildId = "") {
       ${
         showForm
           ? `
-      <form class="child-form panel" id="childForm" data-edit-child-id="${editingChild?.id ?? ""}">
+      <form class="child-form panel" id="childForm" data-edit-child-id="${editingChild?.id ?? ""}" ${allowEditProfile ? "" : "hidden"}>
         <div class="child-form__top">
           <div class="child-photo">
             <span class="child-photo__avatar ${editingChild?.avatar_image ? "child-photo__avatar--image" : ""}" id="childPhotoPreview" style="background: ${selectedColor}" aria-hidden="true">${renderPhotoPreviewHtml(editingChild?.display_name ?? "Dziecko", selectedColor, editingChild?.avatar_image ?? "")}</span>
@@ -912,6 +1111,7 @@ function renderChildSheet(editChildId = "") {
         </div>
         <p class="notice" id="childNotice" hidden></p>
       </form>
+      ${renderSharingPanel(editingChild, sharing)}
           `
           : ""
       }
@@ -936,15 +1136,29 @@ function renderChildSheet(editChildId = "") {
     updateColorPreview(form);
     form.querySelector('input[name="display_name"]')?.focus();
   }
+
+  const shareForm = sheet.querySelector("#shareForm");
+  if (shareForm) {
+    shareForm.addEventListener("submit", handleShareSubmit);
+  }
 }
 
 function closeChildSheet() {
   document.querySelector("#childSheet")?.remove();
 }
 
-function openChildSheet(editChildId = "") {
+async function openChildSheet(editChildId = "") {
   closeChildSheet();
-  renderChildSheet(editChildId);
+  const editingChild = editChildId && editChildId !== "new" ? children.find((child) => child.id === editChildId) : null;
+  let sharing = { members: [], invitations: [] };
+
+  try {
+    sharing = await loadChildSharing(editingChild);
+  } catch (error) {
+    sharing = { members: [], invitations: [] };
+  }
+
+  renderChildSheet(editChildId, sharing);
 }
 
 async function handleChildSubmit(event) {
@@ -973,6 +1187,32 @@ async function handleChildSubmit(event) {
     notice.className = "notice notice--error";
     notice.textContent = translateError(error.message);
     notice.hidden = false;
+  }
+}
+
+async function handleShareSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const notice = form.querySelector("#shareNotice");
+  const formData = new FormData(form);
+  const childId = form.dataset.shareChildId;
+  const email = formData.get("invite_email").toString().trim().toLowerCase();
+  const role = formData.get("invite_role").toString();
+
+  notice.hidden = true;
+
+  if (!isValidEmail(email)) {
+    setNotice(notice, "error", "Podaj poprawny adres email opiekuna.");
+    return;
+  }
+
+  try {
+    await inviteChildMember(childId, email, role);
+    form.reset();
+    setNotice(notice, "success", "Zaproszenie zapisane. Drugi opiekun zobaczy je po zalogowaniu.");
+    await openChildSheet(childId);
+  } catch (error) {
+    setNotice(notice, "error", translateError(error.message));
   }
 }
 
@@ -1020,7 +1260,17 @@ function wirePrintRedraw() {
 async function renderSummary(message = "") {
   summaryAnswers = await loadSummaryAnswers(selectedChildId);
   app.innerHTML = renderSummaryHtml(summaryAnswers, message);
-  app.querySelector("#summaryForm").addEventListener("submit", async (event) => {
+  const summaryForm = app.querySelector("#summaryForm");
+
+  if (!canEditChild()) {
+    summaryForm.querySelectorAll("select, textarea, button").forEach((element) => {
+      element.disabled = true;
+    });
+    summaryForm.insertAdjacentHTML("beforebegin", `<p class="notice">Masz dostęp tylko do podglądu. Pytania otwarte nie mogą być edytowane.</p>`);
+    return;
+  }
+
+  summaryForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     const submitButton = form.querySelector('button[type="submit"]');
@@ -1066,10 +1316,82 @@ function translateError(message) {
   if (message.includes("email rate limit exceeded")) {
     return "Limit wysyłki emaili został chwilowo przekroczony. Spróbuj ponownie za kilka minut.";
   }
+  if (message.includes("Only child owners can invite caregivers")) {
+    return "Tylko właściciel profilu może zapraszać opiekunów.";
+  }
+  if (message.includes("Invalid invitation email")) {
+    return "Podaj poprawny adres email opiekuna.";
+  }
+  if (message.includes("This user already has access")) {
+    return "Ten użytkownik ma już dostęp do profilu dziecka.";
+  }
+  if (message.includes("Invitation not found")) {
+    return "Zaproszenie jest już nieaktualne albo zostało anulowane.";
+  }
+  if (message.includes("Only child owners can cancel invitations")) {
+    return "Tylko właściciel profilu może anulować zaproszenia.";
+  }
+  if (message.includes("Only child owners can change caregiver roles")) {
+    return "Tylko właściciel profilu może zmieniać role opiekunów.";
+  }
+  if (message.includes("Only child owners can remove caregivers")) {
+    return "Tylko właściciel profilu może usuwać opiekunów.";
+  }
+  if (message.includes("Caregiver not found")) {
+    return "Nie znaleziono opiekuna albo nie można zmienić właściciela.";
+  }
   return message;
 }
 
 document.body.addEventListener("click", (event) => {
+  const acceptInvitation = event.target.closest("[data-invitation-accept]");
+  if (acceptInvitation) {
+    acceptChildInvitation(acceptInvitation.dataset.invitationAccept)
+      .then(async (childId) => {
+        await refreshChildrenAndData();
+        selectChild(childId);
+        await refreshData();
+        renderRoute();
+      })
+      .catch((error) => window.alert(translateError(error.message)));
+    return;
+  }
+
+  const declineInvitation = event.target.closest("[data-invitation-decline]");
+  if (declineInvitation) {
+    declineChildInvitation(declineInvitation.dataset.invitationDecline)
+      .then(async () => {
+        await refreshChildrenAndData();
+        renderRoute();
+      })
+      .catch((error) => window.alert(translateError(error.message)));
+    return;
+  }
+
+  const cancelInvitation = event.target.closest("[data-invitation-cancel]");
+  if (cancelInvitation) {
+    cancelChildInvitation(cancelInvitation.dataset.invitationCancel)
+      .then(async (childId) => {
+        await openChildSheet(childId);
+      })
+      .catch((error) => window.alert(translateError(error.message)));
+    return;
+  }
+
+  const removeMember = event.target.closest("[data-member-remove]");
+  if (removeMember) {
+    if (!window.confirm("Usunąć dostęp tego opiekuna do profilu dziecka?")) {
+      return;
+    }
+
+    removeChildMember(removeMember.dataset.childId, removeMember.dataset.memberRemove)
+      .then(async (childId) => {
+        await openChildSheet(childId);
+      })
+      .catch((error) => window.alert(translateError(error.message)));
+    return;
+  }
+
   if (event.target.closest("[data-child-add]")) {
     openChildSheet("new");
     return;
@@ -1146,6 +1468,19 @@ document.body.addEventListener("click", (event) => {
   if (event.target.closest("[data-print]")) {
     window.print();
   }
+});
+
+document.body.addEventListener("change", (event) => {
+  const memberRole = event.target.closest("[data-member-role]");
+  if (!memberRole) {
+    return;
+  }
+
+  updateChildMemberRole(memberRole.dataset.childId, memberRole.dataset.memberRole, memberRole.value)
+    .then(async (childId) => {
+      await openChildSheet(childId);
+    })
+    .catch((error) => window.alert(translateError(error.message)));
 });
 
 tabbar.addEventListener("click", (event) => {

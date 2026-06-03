@@ -22,9 +22,10 @@ export function renderDayPickerHtml(currentDay) {
   `;
 }
 
-export function renderObservationFormHtml(dayNumber, observation) {
+export function renderObservationFormHtml(dayNumber, observation, options = {}) {
   const row = mergeObservation(observation);
   const notes = parseNotes(row.notes);
+  const readOnly = Boolean(options.readOnly);
 
   return `
     <section class="dashboard">
@@ -39,8 +40,10 @@ export function renderObservationFormHtml(dayNumber, observation) {
 
         <label class="field">
           <span class="field__label">Data</span>
-          <input class="field__input" type="date" name="observation_date" value="${escapeHtml(row.observation_date || todayIso())}">
+          <input class="field__input" type="date" name="observation_date" value="${escapeHtml(row.observation_date || todayIso())}" ${readOnly ? "disabled" : ""}>
         </label>
+
+        ${readOnly ? `<p class="notice">Masz dostęp tylko do podglądu. Ten wpis nie może być edytowany.</p>` : ""}
 
         <div class="scale-help" aria-label="Legenda skali">
           ${SCALE.map((item) => `
@@ -74,6 +77,7 @@ export function renderObservationFormHtml(dayNumber, observation) {
                         data-field="${field.key}"
                         data-value="${item.value}"
                         aria-pressed="${value === item.value ? "true" : "false"}"
+                        ${readOnly ? "disabled" : ""}
                       >
                         <span class="score-options__icon state-icon ${item.iconClass}" aria-hidden="true">${item.icon}</span>
                         <span class="score-options__label visually-hidden">${escapeHtml(item.label)}</span>
@@ -87,20 +91,26 @@ export function renderObservationFormHtml(dayNumber, observation) {
           }).join("")}
         </div>
 
-        <label class="field">
-          <span class="field__label" id="noteFieldLabel">Dodaj notatkę</span>
-          <textarea class="field__textarea" name="notes" placeholder="Np. płacz 10 minut przy rozstaniu, po odbiorze pokazała zabawkę..."></textarea>
-        </label>
+        ${
+          readOnly
+            ? ""
+            : `
+              <label class="field">
+                <span class="field__label" id="noteFieldLabel">Dodaj notatkę</span>
+                <textarea class="field__textarea" name="notes" placeholder="Np. płacz 10 minut przy rozstaniu, po odbiorze pokazała zabawkę..."></textarea>
+              </label>
 
-        <div class="note-actions">
-          <button class="button" id="noteSubmitButton" type="submit">Dodaj notatkę</button>
-          <button class="button button--ghost" id="noteCancelButton" type="button" hidden>Anuluj edycję</button>
-        </div>
+              <div class="note-actions">
+                <button class="button" id="noteSubmitButton" type="submit">Dodaj notatkę</button>
+                <button class="button button--ghost" id="noteCancelButton" type="button" hidden>Anuluj edycję</button>
+              </div>
+            `
+        }
         <p class="notice" id="formNotice" hidden></p>
         <article class="saved-note" id="savedNote" ${notes.length ? "" : "hidden"}>
           <p class="saved-note__label">Zapisane notatki</p>
           <div class="saved-note__list">
-            ${renderNotesList(notes)}
+            ${renderNotesList(notes, { readOnly })}
           </div>
         </article>
       </form>
@@ -123,24 +133,32 @@ export function readObservationForm(form) {
   return payload;
 }
 
-export function renderNotesList(notes) {
+export function renderNotesList(notes, options = {}) {
   if (!notes.length) {
     return `<p class="saved-note__empty">Brak zapisanych notatek dla tego dnia.</p>`;
   }
+
+  const readOnly = Boolean(options.readOnly);
 
   return notes
     .map(
       (note, index) => `
         <div class="saved-note__item" data-note-index="${index}">
           <p class="saved-note__text">${escapeHtml(note.text)}</p>
-          <div class="saved-note__actions" aria-label="Akcje notatki">
-            <button class="saved-note__button" type="button" data-note-edit="${index}" aria-label="Edytuj notatkę" title="Edytuj notatkę">
-              <span aria-hidden="true">✎</span>
-            </button>
-            <button class="saved-note__button saved-note__button--danger" type="button" data-note-delete="${index}" aria-label="Usuń notatkę" title="Usuń notatkę">
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
+          ${
+            readOnly
+              ? ""
+              : `
+                <div class="saved-note__actions" aria-label="Akcje notatki">
+                  <button class="saved-note__button" type="button" data-note-edit="${index}" aria-label="Edytuj notatkę" title="Edytuj notatkę">
+                    <span aria-hidden="true">✎</span>
+                  </button>
+                  <button class="saved-note__button saved-note__button--danger" type="button" data-note-delete="${index}" aria-label="Usuń notatkę" title="Usuń notatkę">
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              `
+          }
         </div>
       `,
     )

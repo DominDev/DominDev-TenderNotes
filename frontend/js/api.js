@@ -30,6 +30,7 @@ function withoutAvatarImage(payload) {
 
 export async function loadChildren() {
   const client = requireClient();
+  const user = await requireUser();
   const { data, error } = await client
     .from("children")
     .select("*")
@@ -40,7 +41,29 @@ export async function loadChildren() {
     throw error;
   }
 
-  return data ?? [];
+  const childIds = (data ?? []).map((child) => child.id);
+  if (!childIds.length) {
+    return [];
+  }
+
+  const { data: memberships, error: membershipError } = await client
+    .from("child_members")
+    .select("child_id, role")
+    .eq("user_id", user.id)
+    .in("child_id", childIds);
+
+  if (membershipError) {
+    throw membershipError;
+  }
+
+  const roleByChildId = new Map((memberships ?? []).map((membership) => [membership.child_id, membership.role]));
+
+  return (data ?? [])
+    .filter((child) => roleByChildId.has(child.id))
+    .map((child) => ({
+      ...child,
+      member_role: roleByChildId.get(child.id),
+    }));
 }
 
 export async function createChild(payload) {
@@ -110,6 +133,142 @@ export async function updateChild(childId, payload) {
 
 export async function archiveChild(childId) {
   return updateChild(childId, { archived_at: new Date().toISOString() });
+}
+
+export async function loadChildMembers(childId) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("child_members")
+    .select("child_id,user_id,role,member_email,member_display_name,created_at,updated_at")
+    .eq("child_id", childId)
+    .order("role", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}
+
+export async function loadChildInvitations(childId) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("child_invitations")
+    .select("id,child_id,email,role,status,created_at,updated_at")
+    .eq("child_id", childId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}
+
+export async function loadMyInvitations() {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("child_invitations")
+    .select("id,child_id,email,role,status,created_at,children(display_name,avatar_color,avatar_image,birth_month,age_band)")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}
+
+export async function inviteChildMember(childId, email, role) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("invite_child_member", {
+      p_child_id: childId,
+      p_email: email,
+      p_role: role,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function acceptChildInvitation(invitationId) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("accept_child_invitation", {
+      p_invitation_id: invitationId,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function declineChildInvitation(invitationId) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("decline_child_invitation", {
+      p_invitation_id: invitationId,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function cancelChildInvitation(invitationId) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("cancel_child_invitation", {
+      p_invitation_id: invitationId,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateChildMemberRole(childId, userId, role) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("update_child_member_role", {
+      p_child_id: childId,
+      p_user_id: userId,
+      p_role: role,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function removeChildMember(childId, userId) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("remove_child_member", {
+      p_child_id: childId,
+      p_user_id: userId,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function loadObservations(childId) {
