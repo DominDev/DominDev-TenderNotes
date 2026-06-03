@@ -1,12 +1,12 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-3";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-3";
-import { archiveChild, createChild, loadChildren, loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer, updateChild } from "./api.js?v=20260603-3";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-3";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-3";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-3";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-3";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-3";
-import { getRoute, navigate } from "./router.js?v=20260603-3";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-4";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-4";
+import { archiveChild, createChild, loadChildren, loadObservations, loadSummaryAnswers, saveObservation, saveSummaryAnswer, updateChild } from "./api.js?v=20260603-4";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-4";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-4";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-4";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-4";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-4";
+import { getRoute, navigate } from "./router.js?v=20260603-4";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -123,7 +123,7 @@ function renderAuth(message = "") {
           </label>
           <label class="field">
             <span class="field__label">Email</span>
-            <input class="field__input" type="email" name="email" autocomplete="email" required>
+            <input class="field__input" type="email" name="email" autocomplete="email" inputmode="email" spellcheck="false" required>
           </label>
           <label class="field">
             <span class="field__label">Hasło</span>
@@ -147,16 +147,32 @@ function renderAuth(message = "") {
   app.querySelector("#authForm").addEventListener("submit", handleAuthSubmit);
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
 async function handleAuthSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const notice = form.querySelector("#authNotice");
   const formData = new FormData(form);
-  const email = formData.get("email").toString().trim();
+  const emailInput = form.querySelector('input[name="email"]');
+  const email = formData.get("email").toString().trim().toLowerCase();
   const password = formData.get("password").toString();
   const displayName = formData.get("displayName")?.toString().trim() ?? "";
 
   notice.hidden = true;
+  emailInput.value = email;
+  emailInput.setCustomValidity("");
+
+  if (!isValidEmail(email)) {
+    emailInput.setCustomValidity("Podaj poprawny adres email.");
+    notice.className = "notice notice--error";
+    notice.textContent = "Podaj poprawny adres email, np. imie@example.com.";
+    notice.hidden = false;
+    emailInput.focus();
+    return;
+  }
 
   try {
     if (authMode === "signin") {
@@ -1043,6 +1059,12 @@ function translateError(message) {
   }
   if (message.includes("Email not confirmed")) {
     return "Email nie został jeszcze potwierdzony.";
+  }
+  if (message.includes("Email already registered") || message.includes("User already registered") || message.includes("already registered")) {
+    return "Ten email jest już zarejestrowany. Przejdź do logowania albo użyj innego adresu.";
+  }
+  if (message.includes("email rate limit exceeded")) {
+    return "Limit wysyłki emaili został chwilowo przekroczony. Spróbuj ponownie za kilka minut.";
   }
   return message;
 }

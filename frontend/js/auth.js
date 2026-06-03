@@ -36,6 +36,10 @@ export async function signUp(email, password, displayName) {
     throw error;
   }
 
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    throw new Error("Email already registered");
+  }
+
   return data.user;
 }
 
