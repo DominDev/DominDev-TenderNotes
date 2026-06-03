@@ -48,22 +48,33 @@ export async function loadChildren() {
 
   const { data: memberships, error: membershipError } = await client
     .from("child_members")
-    .select("child_id, role")
-    .eq("user_id", user.id)
+    .select("child_id,user_id,role")
     .in("child_id", childIds);
 
   if (membershipError) {
     throw membershipError;
   }
 
-  const roleByChildId = new Map((memberships ?? []).map((membership) => [membership.child_id, membership.role]));
+  const membersByChildId = new Map();
+  for (const membership of memberships ?? []) {
+    const childMembers = membersByChildId.get(membership.child_id) ?? [];
+    childMembers.push(membership);
+    membersByChildId.set(membership.child_id, childMembers);
+  }
 
   return (data ?? [])
-    .filter((child) => roleByChildId.has(child.id))
-    .map((child) => ({
-      ...child,
-      member_role: roleByChildId.get(child.id),
-    }));
+    .map((child) => {
+      const childMembers = membersByChildId.get(child.id) ?? [];
+      const currentMembership = childMembers.find((membership) => membership.user_id === user.id);
+
+      return {
+        ...child,
+        member_count: childMembers.length,
+        member_role: currentMembership?.role,
+        is_shared: Boolean(currentMembership) && (currentMembership.role !== "owner" || childMembers.length > 1),
+      };
+    })
+    .filter((child) => child.member_role);
 }
 
 export async function createChild(payload) {

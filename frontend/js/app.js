@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-6";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-6";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-7";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-7";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260603-6";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-6";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-6";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-6";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-6";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-6";
-import { getRoute, navigate } from "./router.js?v=20260603-6";
+} from "./api.js?v=20260603-7";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-7";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-7";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-7";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-7";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-7";
+import { getRoute, navigate } from "./router.js?v=20260603-7";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -247,6 +247,35 @@ function canManageChild(child = getSelectedChild()) {
   return child?.member_role === "owner";
 }
 
+function isSharedChild(child) {
+  return Boolean(child?.is_shared);
+}
+
+function sharedIndicatorHtml() {
+  return `<span class="shared-indicator" aria-hidden="true"><span></span><span></span></span>`;
+}
+
+function childRolePillClass(child) {
+  if (child?.member_role === "owner") {
+    return "pill--good";
+  }
+  if (child?.member_role === "viewer") {
+    return "";
+  }
+  return "pill--shared";
+}
+
+function childAccessLabel(child) {
+  return isSharedChild(child) ? `Współdzielone · ${roleLabel(child.member_role)}` : roleLabel(child?.member_role);
+}
+
+function renderChildAccessBadgesHtml(child) {
+  const sharedBadge = isSharedChild(child) ? `<span class="pill pill--shared">${sharedIndicatorHtml()} Współdzielone</span>` : "";
+  const roleBadge = child?.member_role ? `<span class="pill ${childRolePillClass(child)}">${roleLabel(child.member_role)}</span>` : "";
+
+  return `<span class="child-access-badges">${sharedBadge}${roleBadge}</span>`;
+}
+
 function renderChildAvatarHtml(child, className = "child-avatar") {
   const color = child?.avatar_color || AVATAR_COLORS[0];
   const name = child?.display_name || "Dziecko";
@@ -436,7 +465,12 @@ function updateChildSwitcher() {
   childSwitcherAvatar.classList.toggle("child-avatar--image", Boolean(child.avatar_image));
   childSwitcherAvatar.style.background = child.avatar_color || AVATAR_COLORS[0];
   childSwitcherName.textContent = child.display_name;
-  childSwitcherMeta.textContent = formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || "Profil dziecka";
+  childSwitcherMeta.classList.toggle("is-shared", isSharedChild(child));
+  if (isSharedChild(child)) {
+    childSwitcherMeta.innerHTML = `${sharedIndicatorHtml()}<span>${escapeHtml(childAccessLabel(child))}</span>`;
+  } else {
+    childSwitcherMeta.textContent = formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || "Profil dziecka";
+  }
 }
 
 function renderChrome(routeName) {
@@ -1125,6 +1159,7 @@ function renderChildSheet(editChildId = "", sharing = { members: [], invitations
                   <span>
                     <strong>${escapeHtml(child.display_name)}</strong>
                     <small>${escapeHtml(formatChildAge(child) || AGE_BANDS.find((item) => item.value === child.age_band)?.label || "Profil dziecka")}</small>
+                    ${renderChildAccessBadgesHtml(child)}
                   </span>
                 </button>
                 ${canEditChild(child) ? `<button class="icon-button child-card__edit" type="button" data-child-edit="${child.id}" aria-label="Edytuj ${escapeHtml(child.display_name)}">✎</button>` : `<span class="pill">Podgląd</span>`}

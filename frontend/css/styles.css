@@ -162,6 +162,41 @@ button {
   font-size: 0.72rem;
 }
 
+.child-switcher__meta.is-shared {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-accent-strong);
+  font-weight: 740;
+}
+
+.shared-indicator {
+  width: 15px;
+  height: 12px;
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.shared-indicator span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+}
+
+.shared-indicator span:first-child {
+  top: 1px;
+  left: 1px;
+}
+
+.shared-indicator span:last-child {
+  right: 1px;
+  bottom: 1px;
+  background: currentColor;
+}
+
 .main {
   width: min(100%, 860px);
   margin: 0 auto;
@@ -656,6 +691,11 @@ button {
   background: #eaf6ec;
 }
 
+.pill--shared {
+  color: var(--color-accent-strong);
+  background: #e9f4f1;
+}
+
 .pill--warn {
   color: #7a3826;
   background: #fff0e8;
@@ -1068,6 +1108,30 @@ button {
   display: block;
   margin-top: 2px;
   color: var(--color-muted);
+}
+
+.child-access-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.child-access-badges .pill {
+  min-height: 24px;
+  gap: 4px;
+  padding-inline: 8px;
+  font-size: 0.7rem;
+}
+
+.child-access-badges .shared-indicator {
+  width: 13px;
+  height: 10px;
+}
+
+.child-access-badges .shared-indicator span {
+  width: 7px;
+  height: 7px;
 }
 
 .child-card--add small {
