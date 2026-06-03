@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-5";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-5";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-6";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-6";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260603-5";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-5";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-5";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-5";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-5";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-5";
-import { getRoute, navigate } from "./router.js?v=20260603-5";
+} from "./api.js?v=20260603-6";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-6";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-6";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-6";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-6";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-6";
+import { getRoute, navigate } from "./router.js?v=20260603-6";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -35,6 +35,8 @@ const childSwitcherButton = document.querySelector("#childSwitcherButton");
 const childSwitcherAvatar = document.querySelector("#childSwitcherAvatar");
 const childSwitcherName = document.querySelector("#childSwitcherName");
 const childSwitcherMeta = document.querySelector("#childSwitcherMeta");
+const notificationButton = document.querySelector("#notificationButton");
+const notificationBadge = document.querySelector("#notificationBadge");
 
 let currentUser = null;
 let children = [];
@@ -44,6 +46,8 @@ let summaryAnswers = [];
 let pendingInvitations = [];
 let authMode = "signin";
 let printRedrawTimer = null;
+let invitationRefreshTimer = null;
+let invitationRefreshInFlight = null;
 
 const PHOTO_SIZE = 256;
 const PHOTO_MAX_DATA_URL_LENGTH = 90000;
@@ -81,6 +85,7 @@ async function boot() {
     currentUser = user;
     if (currentUser) {
       await refreshChildrenAndData();
+      startInvitationPolling();
       renderRoute();
     } else {
       children = [];
@@ -88,6 +93,9 @@ async function boot() {
       observations = [];
       summaryAnswers = [];
       pendingInvitations = [];
+      closeNotificationsPanel();
+      updateNotificationButton();
+      stopInvitationPolling();
       renderAuth();
     }
   });
@@ -98,12 +106,14 @@ async function boot() {
   }
 
   await refreshChildrenAndData();
+  startInvitationPolling();
   renderRoute();
 }
 
 function renderConfigMissing() {
   topbar.hidden = true;
   tabbar.hidden = true;
+  updateNotificationButton();
   app.innerHTML = `
     <section class="auth">
       <div>
@@ -124,6 +134,8 @@ function renderConfigMissing() {
 function renderAuth(message = "") {
   topbar.hidden = true;
   tabbar.hidden = true;
+  closeNotificationsPanel();
+  updateNotificationButton();
   app.innerHTML = `
     <section class="auth">
       <div>
@@ -257,6 +269,27 @@ function invitationChild(invitation) {
   return Array.isArray(invitation.children) ? invitation.children[0] : invitation.children;
 }
 
+function renderInvitationCardHtml(invitation) {
+  const child = invitationChild(invitation) ?? {};
+  const displayName = child.display_name || "Profil dziecka";
+
+  return `
+    <article class="invite-card" data-invitation-id="${invitation.id}">
+      <div class="invite-card__main">
+        ${renderChildAvatarHtml({ ...child, display_name: displayName })}
+        <span>
+          <strong>${escapeHtml(displayName)}</strong>
+          <small>Rola: ${roleLabel(invitation.role)}</small>
+        </span>
+      </div>
+      <div class="invite-card__actions">
+        <button class="button button--secondary" type="button" data-invitation-accept="${invitation.id}">Przyjmij</button>
+        <button class="button button--ghost" type="button" data-invitation-decline="${invitation.id}">Odrzuć</button>
+      </div>
+    </article>
+  `;
+}
+
 function renderPendingInvitationsHtml() {
   if (!pendingInvitations.length) {
     return "";
@@ -266,30 +299,86 @@ function renderPendingInvitationsHtml() {
     <section class="panel invite-panel">
       <h3 class="panel__title">Zaproszenia do profilu dziecka</h3>
       <div class="invite-list">
-        ${pendingInvitations
-          .map((invitation) => {
-            const child = invitationChild(invitation) ?? {};
-            const displayName = child.display_name || "Profil dziecka";
-            return `
-              <article class="invite-card" data-invitation-id="${invitation.id}">
-                <div class="invite-card__main">
-                  ${renderChildAvatarHtml({ ...child, display_name: displayName })}
-                  <span>
-                    <strong>${escapeHtml(displayName)}</strong>
-                    <small>Rola: ${roleLabel(invitation.role)}</small>
-                  </span>
-                </div>
-                <div class="invite-card__actions">
-                  <button class="button button--secondary" type="button" data-invitation-accept="${invitation.id}">Przyjmij</button>
-                  <button class="button button--ghost" type="button" data-invitation-decline="${invitation.id}">Odrzuć</button>
-                </div>
-              </article>
-            `;
-          })
-          .join("")}
+        ${pendingInvitations.map(renderInvitationCardHtml).join("")}
       </div>
     </section>
   `;
+}
+
+function updateNotificationButton() {
+  if (!notificationButton || !notificationBadge) {
+    return;
+  }
+
+  const count = pendingInvitations.length;
+  notificationButton.hidden = !currentUser || count === 0;
+  notificationBadge.textContent = String(Math.min(count, 9));
+  notificationButton.setAttribute("aria-label", count ? `Powiadomienia: ${count}` : "Powiadomienia");
+}
+
+function closeNotificationsPanel() {
+  document.querySelector("#notificationsPanel")?.remove();
+}
+
+function renderNotificationsPanel() {
+  closeNotificationsPanel();
+
+  const panel = document.createElement("div");
+  panel.className = "notifications-panel";
+  panel.id = "notificationsPanel";
+  panel.innerHTML = `
+    <div class="notifications-panel__scrim" data-notifications-close></div>
+    <section class="notifications-panel__card" role="dialog" aria-modal="true" aria-labelledby="notificationsTitle">
+      <div class="child-sheet__header">
+        <div>
+          <p class="section-label">Powiadomienia</p>
+          <h2 class="child-sheet__title" id="notificationsTitle">Zaproszenia</h2>
+        </div>
+        <button class="icon-button" type="button" data-notifications-close aria-label="Zamknij">×</button>
+      </div>
+      ${
+        pendingInvitations.length
+          ? `<div class="invite-list">${pendingInvitations.map(renderInvitationCardHtml).join("")}</div>`
+          : `<p class="panel__hint">Nie masz teraz nowych zaproszeń.</p>`
+      }
+    </section>
+  `;
+  document.body.append(panel);
+}
+
+async function refreshPendingInvitations({ updatePanel = true } = {}) {
+  if (!currentUser || invitationRefreshInFlight) {
+    return invitationRefreshInFlight;
+  }
+
+  invitationRefreshInFlight = loadMyInvitations()
+    .then((invitations) => {
+      pendingInvitations = invitations;
+      updateNotificationButton();
+      if (updatePanel && document.querySelector("#notificationsPanel")) {
+        renderNotificationsPanel();
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      invitationRefreshInFlight = null;
+    });
+
+  return invitationRefreshInFlight;
+}
+
+function startInvitationPolling() {
+  window.clearInterval(invitationRefreshTimer);
+  invitationRefreshTimer = window.setInterval(() => {
+    if (!document.hidden) {
+      refreshPendingInvitations();
+    }
+  }, 45000);
+}
+
+function stopInvitationPolling() {
+  window.clearInterval(invitationRefreshTimer);
+  invitationRefreshTimer = null;
 }
 
 function selectChild(childId) {
@@ -314,6 +403,7 @@ async function refreshChildrenAndData() {
     loadChildren(),
     loadMyInvitations(),
   ]);
+  updateNotificationButton();
   ensureSelectedChild();
   await refreshData();
 }
@@ -353,6 +443,7 @@ function renderChrome(routeName) {
   topbar.hidden = false;
   tabbar.hidden = false;
   viewTitle.textContent = titles[routeName] ?? "TenderNotes";
+  updateNotificationButton();
   document.querySelectorAll(".tabbar__button").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.route === routeName);
   });
@@ -1351,6 +1442,7 @@ document.body.addEventListener("click", (event) => {
         await refreshChildrenAndData();
         selectChild(childId);
         await refreshData();
+        closeNotificationsPanel();
         renderRoute();
       })
       .catch((error) => window.alert(translateError(error.message)));
@@ -1362,9 +1454,15 @@ document.body.addEventListener("click", (event) => {
     declineChildInvitation(declineInvitation.dataset.invitationDecline)
       .then(async () => {
         await refreshChildrenAndData();
+        closeNotificationsPanel();
         renderRoute();
       })
       .catch((error) => window.alert(translateError(error.message)));
+    return;
+  }
+
+  if (event.target.closest("[data-notifications-close]")) {
+    closeNotificationsPanel();
     return;
   }
 
@@ -1498,6 +1596,24 @@ childSwitcherButton.addEventListener("click", () => {
   openChildSheet();
 });
 
-window.addEventListener("hashchange", renderRoute);
+notificationButton.addEventListener("click", async () => {
+  await refreshPendingInvitations();
+  renderNotificationsPanel();
+});
+
+window.addEventListener("focus", () => {
+  refreshPendingInvitations();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    refreshPendingInvitations();
+  }
+});
+
+window.addEventListener("hashchange", () => {
+  refreshPendingInvitations({ updatePanel: false });
+  renderRoute();
+});
 
 boot();

@@ -364,6 +364,29 @@ button {
   stroke-linejoin: round;
 }
 
+.notification-button {
+  position: relative;
+  color: var(--color-accent-strong);
+}
+
+.notification-button__badge {
+  position: absolute;
+  top: -3px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  color: #ffffff;
+  background: var(--color-warn);
+  border: 2px solid var(--color-paper);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 820;
+  line-height: 1;
+}
+
 .auth-switch {
   display: flex;
   gap: 8px;
@@ -1366,6 +1389,36 @@ button {
 .share-form {
   display: grid;
   gap: var(--space-field);
+}
+
+.notifications-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  align-items: start;
+  padding: 76px 12px 12px;
+}
+
+.notifications-panel__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(36, 32, 29, 0.2);
+}
+
+.notifications-panel__card {
+  position: relative;
+  width: min(100%, 420px);
+  max-height: min(76vh, 620px);
+  justify-self: end;
+  display: grid;
+  gap: var(--space-card);
+  overflow: auto;
+  padding: 14px;
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
 }
 
 .tabbar {
