@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260603-10";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260603-10";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260604-1";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260604-1";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260603-10";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260603-10";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260603-10";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260603-10";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260603-10";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260603-10";
-import { getRoute, navigate } from "./router.js?v=20260603-10";
+} from "./api.js?v=20260604-1";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260604-1";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260604-1";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260604-1";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260604-1";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260604-1";
+import { getRoute, navigate } from "./router.js?v=20260604-1";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -1061,6 +1061,7 @@ function renderSharingPanel(child, sharing) {
     <section class="sharing-panel panel">
       <h3 class="panel__title">Opiekunowie</h3>
       <p class="panel__hint">Udostępnij profil drugiemu opiekunowi. Edytor może uzupełniać wpisy, a podgląd pozwala tylko czytać historię i raport.</p>
+      <p class="panel__hint">Zaproszenia są widoczne w aplikacji po zalogowaniu na podany adres. TenderNotes nie wysyła ich emailem.</p>
 
       <form class="share-form" id="shareForm" data-share-child-id="${child.id}">
         <label class="field">
@@ -1348,8 +1349,11 @@ async function handleShareSubmit(event) {
   try {
     await inviteChildMember(childId, email, role);
     form.reset();
-    setNotice(notice, "success", "Zaproszenie zapisane. Drugi opiekun zobaczy je po zalogowaniu.");
     await openChildSheet(childId);
+    const refreshedNotice = document.querySelector("#shareNotice");
+    if (refreshedNotice) {
+      setNotice(refreshedNotice, "success", "Zaproszenie jest gotowe. Drugi opiekun zobaczy je po zalogowaniu do TenderNotes na ten adres email.");
+    }
   } catch (error) {
     setNotice(notice, "error", translateError(error.message));
   }
