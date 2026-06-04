@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260604-1";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260604-1";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260604-2";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260604-2";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260604-1";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260604-1";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260604-1";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260604-1";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260604-1";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260604-1";
-import { getRoute, navigate } from "./router.js?v=20260604-1";
+} from "./api.js?v=20260604-2";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260604-2";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260604-2";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260604-2";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260604-2";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260604-2";
+import { getRoute, navigate } from "./router.js?v=20260604-2";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -1049,6 +1049,20 @@ function renderCaregiverName(member) {
   return member.member_display_name || member.member_email || "Opiekun";
 }
 
+function renderInviteRoleOptions() {
+  return MEMBER_ROLES.map(
+    (role, index) => `
+      <label class="role-choice">
+        <input class="role-choice__input" type="radio" name="invite_role" value="${role.value}" ${index === 0 ? "checked" : ""}>
+        <span class="role-choice__body">
+          <span class="role-choice__title">${role.label}</span>
+          <span class="role-choice__help">${role.help}</span>
+        </span>
+      </label>
+    `,
+  ).join("");
+}
+
 function renderSharingPanel(child, sharing) {
   if (!child || !canManageChild(child)) {
     return "";
@@ -1060,20 +1074,17 @@ function renderSharingPanel(child, sharing) {
   return `
     <section class="sharing-panel panel">
       <h3 class="panel__title">Opiekunowie</h3>
-      <p class="panel__hint">Udostępnij profil drugiemu opiekunowi. Edytor może uzupełniać wpisy, a podgląd pozwala tylko czytać historię i raport.</p>
-      <p class="panel__hint">Zaproszenia są widoczne w aplikacji po zalogowaniu na podany adres. TenderNotes nie wysyła ich emailem.</p>
+      <p class="panel__hint">Zaproś drugiego opiekuna przez email. Zaproszenie pojawi się w TenderNotes po zalogowaniu na ten adres; nie wysyłamy osobnego maila.</p>
 
       <form class="share-form" id="shareForm" data-share-child-id="${child.id}">
         <label class="field">
           <span class="field__label">Email opiekuna</span>
           <input class="field__input" type="email" name="invite_email" inputmode="email" autocomplete="email" required>
         </label>
-        <label class="field">
-          <span class="field__label">Rola</span>
-          <select class="field__select" name="invite_role">
-            ${MEMBER_ROLES.map((role) => `<option value="${role.value}">${role.label} - ${role.help}</option>`).join("")}
-          </select>
-        </label>
+        <fieldset class="role-choice-group">
+          <legend class="field__label">Rola</legend>
+          ${renderInviteRoleOptions()}
+        </fieldset>
         <button class="button button--secondary" type="submit">Zaproś opiekuna</button>
         <p class="notice" id="shareNotice" hidden></p>
       </form>
