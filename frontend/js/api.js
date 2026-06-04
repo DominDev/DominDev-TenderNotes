@@ -180,10 +180,18 @@ export async function loadChildInvitations(childId) {
 
 export async function loadMyInvitations() {
   const client = requireClient();
+  const user = await requireUser();
+  const email = user.email?.trim().toLowerCase();
+
+  if (!email) {
+    return [];
+  }
+
   const { data, error } = await client
     .from("child_invitations")
     .select("id,child_id,email,role,status,created_at,children(display_name,avatar_color,avatar_image,birth_month,age_band)")
     .eq("status", "pending")
+    .eq("email", email)
     .order("created_at", { ascending: false });
 
   if (error) {
