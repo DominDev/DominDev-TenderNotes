@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260604-2";
-import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260604-2";
+import { isSupabaseConfigured, supabase } from "./supabaseClient.js?v=20260604-3";
+import { getCurrentUser, onAuthStateChange, signIn, signOut, signUp } from "./auth.js?v=20260604-3";
 import {
   acceptChildInvitation,
   archiveChild,
@@ -18,13 +18,13 @@ import {
   saveSummaryAnswer,
   updateChild,
   updateChildMemberRole,
-} from "./api.js?v=20260604-2";
-import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260604-2";
-import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260604-2";
-import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260604-2";
-import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260604-2";
-import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260604-2";
-import { getRoute, navigate } from "./router.js?v=20260604-2";
+} from "./api.js?v=20260604-3";
+import { drawAreaAverages, drawScoreDistribution, drawTrend } from "./charts.js?v=20260604-3";
+import { renderHistoryHtml, renderNotesList, renderObservationFormHtml, readObservationForm, suggestedNextDay, wireScoreButtons } from "./observations.js?v=20260604-3";
+import { renderReportHtml, renderSummaryHtml } from "./reports.js?v=20260604-3";
+import { OBSERVATION_FIELDS, TOTAL_DAYS } from "./constants.js?v=20260604-3";
+import { childInitials, completionCount, escapeHtml, formatChildAge, formatSerenityIndex, makeId, parseNotes, serializeNotes } from "./utils.js?v=20260604-3";
+import { getRoute, navigate } from "./router.js?v=20260604-3";
 
 const app = document.querySelector("#app");
 const topbar = document.querySelector("#topbar");
@@ -1074,7 +1074,7 @@ function renderSharingPanel(child, sharing) {
   return `
     <section class="sharing-panel panel">
       <h3 class="panel__title">Opiekunowie</h3>
-      <p class="panel__hint">Zaproś drugiego opiekuna przez email. Zaproszenie pojawi się w TenderNotes po zalogowaniu na ten adres; nie wysyłamy osobnego maila.</p>
+      <p class="panel__hint">Zaproś opiekuna. Zaproszenie pojawi się w TenderNotes po zalogowaniu.</p>
 
       <form class="share-form" id="shareForm" data-share-child-id="${child.id}">
         <label class="field">
